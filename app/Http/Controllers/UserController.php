@@ -19,6 +19,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
             'role_id' => 'required|exists:roles,id',
+            'state' => 'sometimes|in:active,inactive,banned',
         ]);
 
         if ($validator->fails()) {
