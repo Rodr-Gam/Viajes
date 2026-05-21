@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Hotel extends Model
+class Package extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -15,19 +15,18 @@ class Hotel extends Model
         'name',
         'description',
         'city_id',
-        'address',
-        'stars',
-        'price_per_night',
-        'status',
+        'duration',
+        'departure_date',
+        'stock',
+        'price_adult',
+        'price_junior',
+        'price_child',
         'image_path',
-        'name_supplier',
-        'booking_source',
-        'provider_cost',
-        'observations',
+        'status',
     ];
 
     /**
-     * Obtiene la ciudad a la que pertenece el hotel.
+     * Obtiene la ciudad (destino) a la que pertenece el paquete.
      */
     public function city(): BelongsTo
     {
