@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request; // 👈 1. IMPORTANTE: Agregamos esta importación
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,19 +12,18 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-
     ->withMiddleware(function (Middleware $middleware) {
-
-        $middleware->redirectGuestsTo(function () {
-
-            return response()->json([
-                'message' => 'No autenticado'
-            ], 401);
-
+        // 2. Quitamos el redirectGuestsTo de aquí porque rompía los headers de la API
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        
+        // 🚀 3. EL TRUCO SENIOR: Esto le dice a Laravel: 
+        // "Si la petición va para la API (api/*), NO REDIRECCIONES JAMÁS, responde JSON limpio"
+        $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
+            if ($request->is('api/*')) {
+                return true;
+            }
+            return $request->expectsJson();
         });
 
-    })
-
-    ->withExceptions(function (Exceptions $exceptions) {
-        //
     })->create();
