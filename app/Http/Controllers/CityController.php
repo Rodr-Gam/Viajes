@@ -7,6 +7,14 @@ use Illuminate\Http\Request;
 
 class CityController extends Controller
 {
+    // 🚀 NUEVO: Regresa la lista de todas las ciudades a React
+    public function index()
+    {
+        $cities = City::all(); 
+        return response()->json($cities, 200);
+    }
+
+    // Tu función de guardar que ya tenías perfecta
     public function store(Request $request)
     {
         $request->validate([

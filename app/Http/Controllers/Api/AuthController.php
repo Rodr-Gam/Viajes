@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    // 1. Registro exclusivo para la API
     public function register(Request $request)
     {
-        // 1. Validamos usando los campos exactos de tu diagrama de BD
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:45',
             'last_name' => 'required|string|max:45',
             'email' => 'required|string|email|max:100|unique:users',
@@ -21,55 +22,66 @@ class AuthController extends Controller
             'role_id' => 'required|exists:roles,id',
         ]);
 
-        // 2. Creamos al usuario con sus datos completos
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 400);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($request->password), 
             'phone' => $request->phone,
-            'state' => 'active', // Estado inicial
+            'state' => 'active', 
             'role_id' => $request->role_id,
         ]);
 
-        // 3. Generamos su token de acceso
-        $token = $user->createToken('api-token')->plainTextToken;
-
         return response()->json([
-            'message' => '¡Usuario registrado exitosamente!',
-            'token' => $token,
+            'message' => '¡Usuario registrado con éxito desde Auth!',
             'user' => $user
         ], 201);
     }
 
+    // 2. Login exclusivo para la API (Blindado contra redirecciones)
     public function login(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required|string',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'El correo y la contraseña son requeridos.',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Credenciales incorrectas'
+                'message' => 'Las credenciales ingresadas son incorrectas.'
             ], 401);
         }
 
-        // Si su cuenta está baneada o inactiva (agregamos esta validación extra por tu BD)
         if ($user->state !== 'active') {
             return response()->json([
-                'message' => 'Tu cuenta no está activa. Contacta a soporte.'
+                'message' => 'Tu cuenta no se encuentra activa en el sistema.'
             ], 403);
         }
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login correcto',
+            'message' => '¡Bienvenido de nuevo, ' . $user->name . '!',
             'token' => $token,
-            'user' => $user
-        ]);
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role_id' => $user->role_id
+            ]
+        ], 200);
     }
 }
