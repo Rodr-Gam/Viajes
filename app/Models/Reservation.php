@@ -15,8 +15,8 @@ class Reservation extends Model
         'observations',
     ];
 
-    /*public function package()
+    public function package()
     {
         return $this->belongsTo(Package::class);
-    }*/
+    }
 }
