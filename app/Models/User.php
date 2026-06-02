@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes; // Importante para tu diagrama
+use App\Models\Role;
 
 class User extends Authenticatable
 {
@@ -38,5 +39,10 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function hasRole($role)
+    {
+        return $this->role && $this->role->name === $role;
     }
 }
