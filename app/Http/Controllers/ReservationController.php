@@ -12,9 +12,8 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        //$reservations = Reservation::all();
-
-        //return response()->json($reservations);
+        $reservations = Reservation::with('package')->get();
+        return response()->json($reservations);
     }
 
     /**
@@ -30,13 +29,22 @@ class ReservationController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user || !$user->hasRole('admin')) {
+            return response()->json([
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $data = $request->validate([
-            'reference_person' => 'required|string|max:45',
+            'package_id' => 'required|exists:packages,id',
+            'reference_person' => 'nullable|string|max:45',
             'reservation_date' => 'required|date',
             'departure_date' => 'required|date|after_or_equal:reservation_date',
             'return_date' => 'required|date|after_or_equal:departure_date',
-            'state' => 'required|in:pending,confirmed,canceled,finished,paid',
-            'observations' => 'nullable|string',
+            'state' => 'required|in:pending,confirmed,canceled,finished',
+            'observations' => 'nullable|string|max:500',
         ]);
 
         $reservation = Reservation::create($data);

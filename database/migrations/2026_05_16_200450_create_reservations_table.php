@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('package_id')->constrained('packages')->onDelete('cascade');
-            $table->string('reference_person', 45);
+            $table->string('reference_person', 45)->nullable();
             $table->date('reservation_date');
             $table->date('departure_date');
             $table->date('return_date');
