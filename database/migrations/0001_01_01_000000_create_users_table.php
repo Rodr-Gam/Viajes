@@ -11,16 +11,21 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            // Agregamos los campos de tu diagrama aquí:
             $table->string('last_name', 45);
             $table->string('email')->unique();
             $table->string('phone', 20)->nullable();
             $table->enum('state', ['active', 'inactive', 'banned'])->default('active');
+            
+            // 🔑 Relación con Roles (Asegúrate de que la tabla 'roles' se cree ANTES que esta)
+            $table->foreignId('role_id')
+                  ->constrained('roles')
+                  ->onDelete('cascade');
+
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes(); // Para tu deleted_at
+            $table->softDeletes(); 
         });
     }
 

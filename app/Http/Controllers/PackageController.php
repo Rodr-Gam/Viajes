@@ -8,16 +8,17 @@ use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
 {
-    // 1. Listar todos los paquetes activos con su ciudad
+    // 1. Listar todos los paquetes activos con su ciudad y el usuario creador
     public function index()
     {
-        $packages = Package::with('city')->where('status', 'active')->get();
+        $packages = Package::with(['city', 'user'])->where('status', 'active')->get();
         return response()->json($packages, 200);
     }
 
-    // 2. Crear un nuevo paquete
+    // 2. Crear un nuevo paquete asignando el creador automáticamente
     public function store(Request $request)
     {
+        // 🛠️ AJUSTE: Quitamos 'user_id' de la validación requerida del cliente
         $request->validate([
             'name' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
@@ -32,6 +33,13 @@ class PackageController extends Controller
 
         $packageData = $request->except('image');
 
+        // 👤 AUTOMATIZACIÓN: Capturamos el usuario desde el Token o usamos el ID 1 de respaldo
+        if ($request->user()) {
+            $packageData['user_id'] = $request->user()->id;
+        } else {
+            $packageData['user_id'] = 1; 
+        }
+
         if ($request->hasFile('image')) {
             $packageData['image_path'] = $request->file('image')->store('packages', 'public');
         }
@@ -44,7 +52,7 @@ class PackageController extends Controller
     // 3. Ver detalle de un paquete específico
     public function show($id)
     {
-        $package = Package::with('city')->find($id);
+        $package = Package::with(['city', 'user'])->find($id);
 
         if (!$package) {
             return response()->json(['message' => 'Paquete no encontrado'], 404);
@@ -53,7 +61,7 @@ class PackageController extends Controller
         return response()->json($package, 200);
     }
 
-    // 4. Actualizar un paquete (Usa el truco del _method -> PUT en Postman)
+    // 4. Actualizar un paquete
     public function update(Request $request, $id)
     {
         $package = Package::find($id);
@@ -61,6 +69,7 @@ class PackageController extends Controller
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
 
+        // 🛠️ AJUSTE: Quitamos la validación forzada de 'user_id' aquí también
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'city_id' => 'sometimes|exists:cities,id',

@@ -14,6 +14,7 @@ class Package extends Model
     protected $fillable = [
         'name',
         'description',
+        'user_id', 
         'city_id',
         'duration',
         'departure_date',
@@ -25,9 +26,11 @@ class Package extends Model
         'status',
     ];
 
-    /**
-     * Obtiene la ciudad (destino) a la que pertenece el paquete.
-     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);

@@ -10,19 +10,17 @@ use Illuminate\Support\Facades\Validator;
 class UserController extends Controller
 {
     /**
-     * 1. INDEX: Listar todos los usuarios
-     * Ideal para meterlos en una tabla en el frontend.
+     * 1. INDEX: Listar todos los usuarios con sus roles y paquetes creados
      */
     public function index()
     {
-        // Traemos los usuarios junto con su rol usando la relación del modelo
-        $users = User::with('role')->get();
+        // 🚀 Traemos los usuarios junto con su rol y sus paquetes creados
+        $users = User::with(['role', 'packages'])->get();
         return response()->json($users, 200);
     }
 
     /**
      * 2. STORE: Crear un usuario manualmente (Desde el Admin)
-     * Conservamos tu lógica original pero permitiendo asignar el estado.
      */
     public function store(Request $request)
     {
@@ -49,7 +47,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'state' => $request->state ?? 'active', // Si no envían estado, cae en active
+            'state' => $request->state ?? 'active', 
             'role_id' => $request->role_id,
         ]);
 
@@ -60,12 +58,12 @@ class UserController extends Controller
     }
 
     /**
-     * 3. SHOW: Ver los detalles de un solo usuario
-     * Útil cuando le das clic a "Ver Perfil" o "Editar" en una fila.
+     * 3. SHOW: Ver los detalles de un solo usuario con sus paquetes
      */
     public function show($id)
     {
-        $user = User::with('role')->find($id);
+        // 🚀 También cargamos los paquetes vinculados en el detalle individual
+        $user = User::with(['role', 'packages'])->find($id);
 
         if (!$user) {
             return response()->json(['message' => 'Usuario no encontrado.'], 404);
@@ -76,7 +74,6 @@ class UserController extends Controller
 
     /**
      * 4. UPDATE: Modificar los datos de un usuario existente
-     * Ojo al truco del correo y la contraseña.
      */
     public function update(Request $request, $id)
     {
@@ -89,7 +86,6 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:45',
             'last_name' => 'sometimes|string|max:45',
-            // El truco 'unique:users,email,'.$id le dice a Laravel: "El email debe ser único, pero ignora el de este usuario"
             'email' => 'sometimes|string|email|max:100|unique:users,email,' . $id,
             'password' => 'nullable|string|min:8',
             'phone' => 'nullable|string|max:20',
@@ -104,7 +100,6 @@ class UserController extends Controller
             ], 400);
         }
 
-        // Actualizamos los campos estándar si vienen en la petición
         $user->name = $request->name ?? $user->name;
         $user->last_name = $request->last_name ?? $user->last_name;
         $user->email = $request->email ?? $user->email;
@@ -112,7 +107,6 @@ class UserController extends Controller
         $user->role_id = $request->role_id ?? $user->role_id;
         $user->state = $request->state ?? $user->state;
 
-        // Si el admin escribió algo en la contraseña, la encriptamos. Si la dejó vacía, no la tocamos.
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
@@ -126,9 +120,7 @@ class UserController extends Controller
     }
 
     /**
-     * 5. DESTROY: Borrar un usuario del mapa
-     * Como tu modelo usa SoftDeletes, esto no lo borra físicamente,
-     * solo le pone fecha en 'deleted_at' (se va a la papelera).
+     * 5. DESTROY: Borrar un usuario (Soft Delete)
      */
     public function destroy($id)
     {
@@ -138,7 +130,7 @@ class UserController extends Controller
             return response()->json(['message' => 'Usuario no encontrado.'], 404);
         }
 
-        $user->delete(); // Aplica el Soft Delete automáticamente
+        $user->delete(); 
 
         return response()->json([
             'message' => '¡Usuario eliminado correctamente de la lista activa!'
