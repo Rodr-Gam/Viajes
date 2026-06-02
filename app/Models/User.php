@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\SoftDeletes; // Importante para tu diagrama
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Role;
+use App\Models\Package;
 
 class User extends Authenticatable
 {
@@ -15,11 +16,11 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'last_name', // Agregado según tu BD
+        'last_name', 
         'email',
         'password',
-        'phone',     // Agregado según tu BD
-        'state',     // Agregado según tu BD (active, inactive, banned)
+        'phone',     
+        'state',     
         'role_id',
     ];
 
@@ -36,11 +37,25 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Obtiene el rol asignado al usuario.
+     */
     public function role()
     {
         return $this->belongsTo(Role::class);
     }
 
+    /**
+     * 📦 NUEVO: Obtiene todos los paquetes turísticos creados por este usuario.
+     */
+    public function packages()
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    /**
+     * Comprueba si el usuario tiene un rol específico.
+     */
     public function hasRole($role)
     {
         return $this->role && $this->role->name === $role;
