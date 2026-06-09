@@ -18,6 +18,7 @@ class Hotel extends Model
         'stars',
         'price_per_night',
         'status',
+        'image_path', // Agregado aquí para que permita guardar la foto
         'hgdl_key', 
         'name_supplier',
         'booking_source',
@@ -25,9 +26,6 @@ class Hotel extends Model
         'observations',
     ];
 
-    /**
-     * Obtiene la ciudad a la que pertenece el hotel.
-     */
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
