@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+// ❌ Eliminamos: use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Hotel extends Model
 {
-    use HasFactory, SoftDeletes;
+    // ❌ Quitamos SoftDeletes de los traits
+    use HasFactory;
 
     protected $fillable = [
         'name',

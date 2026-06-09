@@ -35,7 +35,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             
             $table->timestamps();
-            $table->softDeletes(); 
+            // ❌ ELIMINADO: $table->softDeletes(); para que ya no cree la columna 'deleted_at'
         });
     }
 
