@@ -22,7 +22,7 @@ return new class extends Migration
             $table->integer('stars')->default(3);
             $table->decimal('price_per_night', 10, 2);
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->string('image_path')->nullable(); // Para la foto opcional
+            $table->string('image_path')->nullable(); 
             
             // Nuevos campos agregados
             $table->string('name_supplier')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->text('observations')->nullable();
             
             $table->timestamps();
-            $table->softDeletes(); // Borrado lógico
+            // ❌ ELIMINADO: $table->softDeletes(); para que ya no añada 'deleted_at'
         });
     }
 
