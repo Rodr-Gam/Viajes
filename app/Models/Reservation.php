@@ -3,15 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 
 class Reservation extends Model
 {
-    use SoftDeletes;
 
     protected $fillable = [
+        'user_id', // 
         'package_id',
-        'reference_person',
+        'reference_person', 
         'reservation_date',
         'departure_date',
         'return_date',
@@ -20,8 +21,13 @@ class Reservation extends Model
         'observations',
     ];
 
-    public function package()
+    public function package(): BelongsTo
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

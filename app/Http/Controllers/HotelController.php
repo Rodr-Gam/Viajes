@@ -4,17 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Hotel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class HotelController extends Controller
 {
-    // Listar todos los hoteles
     public function index()
     {
         return response()->json(Hotel::with('city')->get(), 200);
     }
 
-    // Registrar un nuevo hotel
     public function store(Request $request)
     {
         $request->validate([
@@ -24,20 +21,15 @@ class HotelController extends Controller
             'stars'           => 'required|integer|min:1|max:5',
             'price_per_night' => 'required|numeric|min:0',
             'status'          => 'sometimes|in:active,inactive',
-            'image'           => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'hgdl_key'        => 'nullable|string|max:20', // ✨ Validando el nuevo campo
             'name_supplier'   => 'nullable|string|max:255',
             'booking_source'  => 'nullable|string|max:255',
             'provider_cost'   => 'nullable|numeric|min:0',
             'observations'    => 'nullable|string',
         ]);
 
-        $hotelData = $request->except('image');
-
-        if ($request->hasFile('image')) {
-            $hotelData['image_path'] = $request->file('image')->store('hotels', 'public');
-        }
-
-        $hotel = Hotel::create($hotelData);
+        // Guardamos directamente todo el request ya que no hay que procesar archivos
+        $hotel = Hotel::create($request->all());
 
         return response()->json(['message' => 'Hotel creado!', 'hotel' => $hotel], 201);
     }
@@ -64,35 +56,27 @@ class HotelController extends Controller
             'stars'           => 'sometimes|integer|min:1|max:5',
             'price_per_night' => 'sometimes|numeric',
             'status'          => 'sometimes|in:active,inactive',
-            'image'           => 'nullable|image|max:2048',
+            'hgdl_key'        => 'nullable|string|max:20', // ✨ Validando en la actualización
             'name_supplier'   => 'nullable|string|max:255',
             'booking_source'  => 'nullable|string|max:255',
             'provider_cost'   => 'nullable|numeric|min:0',
             'observations'    => 'nullable|string',
         ]);
 
-        $data = $request->except('image');
-
-        if ($request->hasFile('image')) {
-            // Borrar imagen anterior si existe
-            if ($hotel->image_path) {
-                Storage::disk('public')->delete($hotel->image_path);
-            }
-            $data['image_path'] = $request->file('image')->store('hotels', 'public');
-        }
-
-        $hotel->update($data);
+        // Actualizamos directo de los datos del request
+        $hotel->update($request->all());
 
         return response()->json(['message' => 'Hotel actualizado', 'hotel' => $hotel]);
     }
 
-    // Eliminar hotel (Soft Delete)
     public function destroy($id)
     {
         $hotel = Hotel::find($id);
         if (!$hotel) return response()->json(['message' => 'No encontrado'], 404);
 
+        // 🔥 Al no haber imagen en storage, borramos el registro directamente de la base de datos
         $hotel->delete();
-        return response()->json(['message' => 'Hotel eliminado (Soft Delete)'], 200);
+        
+        return response()->json(['message' => 'Hotel eliminado definitivamente de la base de datos'], 200);
     }
 }

@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Hotel extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'name',
@@ -19,7 +18,7 @@ class Hotel extends Model
         'stars',
         'price_per_night',
         'status',
-        'image_path',
+        'hgdl_key', 
         'name_supplier',
         'booking_source',
         'provider_cost',

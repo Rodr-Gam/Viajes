@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Reservation;
+use App\Models\Package;
 use Illuminate\Http\Request;
 
 class ReservationController extends Controller
@@ -12,16 +13,9 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        $reservations = Reservation::with(['package.user', 'package.city'])->get();
+        // Traemos también la relación del usuario que reservó
+        $reservations = Reservation::with(['user', 'package.user', 'package.city'])->get();
         return response()->json($reservations);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -48,7 +42,10 @@ class ReservationController extends Controller
             'observations' => 'nullable|string|max:500',
         ]);
 
-        $package = \App\Models\Package::findOrFail($data['package_id']);
+        // 👤 Automatización del ID de usuario
+        $data['user_id'] = $user ? $user->id : 1; 
+
+        $package = Package::findOrFail($data['package_id']);
 
         if ($package->stock < $data['reserved_seats']) {
             return response()->json([
@@ -66,20 +63,12 @@ class ReservationController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Reservation $reservation)
-    {
-        //
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Reservation $reservation)
     {
         return response()->json(
-            $reservation->load(['package.user'])
+            $reservation->load(['package.user', 'user'])
         );
     }
 
@@ -88,7 +77,6 @@ class ReservationController extends Controller
      */
     public function update(Request $request, Reservation $reservation)
     {
-
         $data = $request->validate([
             'package_id' => 'required|exists:packages,id',
             'reference_person' => 'nullable|string|max:45',
@@ -124,18 +112,36 @@ class ReservationController extends Controller
 
         if ($isCanceling) {
             $package->increment('stock', $asientosReservados);
-            return response()->json([
-                'message' => '¡Reserva actualizada con éxito!',
-                'reservation' => $reservation
-            ]);
         }
+
+        return response()->json([
+            'message' => '¡Reserva actualizada con éxito!',
+            'reservation' => $reservation
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
+     * 🧨 AJUSTE 3: Borrado físico real e inteligente con retorno de stock
      */
-    public function destroy(Reservation $reservation)
+    public function destroy($id)
     {
-        //
+        $reservation = Reservation::find($id);
+
+        if (!$reservation) {
+            return response()->json(['message' => 'Reserva no encontrada'], 404);
+        }
+
+        // 🔄 Si la reserva NO estaba cancelada, devolvemos los asientos al stock del paquete
+        if ($reservation->state !== 'canceled') {
+            $package = Package::find($reservation->package_id);
+            if ($package) {
+                $package->increment('stock', $reservation->reserved_seats);
+            }
+        }
+
+        $reservation->delete();
+
+        return response()->json(['message' => 'Reserva eliminada definitivamente de la base de datos'], 200);
     }
 }

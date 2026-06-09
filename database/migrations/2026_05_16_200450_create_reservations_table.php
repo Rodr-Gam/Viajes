@@ -13,8 +13,16 @@ return new class extends Migration
     {
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
+            
+            // 👤 AJUSTE 1: Añadimos relación con usuarios PROTEGIDA (Sin cascade por seguridad)
+            $table->foreignId('user_id')->constrained('users');
+            
+            // 📦 Relación con paquetes
             $table->foreignId('package_id')->constrained('packages')->onDelete('cascade');
+            
+            // 📑 Se mantiene intacto tu nombre original
             $table->string('reference_person', 45)->nullable();
+            
             $table->date('reservation_date');
             $table->date('departure_date');
             $table->date('return_date');
@@ -22,7 +30,8 @@ return new class extends Migration
             $table->enum('state', ['pending', 'confirmed', 'canceled', 'finished', 'paid'])->default('pending');
             $table->text('observations')->nullable();
             $table->timestamps();
-            $table->softDeletes();
+            
+            // ❌ AJUSTE 2: ELIMINADO el softDeletes para borrado físico real
         });
     }
 

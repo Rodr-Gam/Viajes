@@ -9,19 +9,12 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    /**
-     * 1. INDEX: Listar todos los usuarios con sus roles y paquetes creados
-     */
     public function index()
     {
-        // 🚀 Traemos los usuarios junto con su rol y sus paquetes creados
         $users = User::with(['role', 'packages'])->get();
         return response()->json($users, 200);
     }
 
-    /**
-     * 2. STORE: Crear un usuario manualmente (Desde el Admin)
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -57,12 +50,8 @@ class UserController extends Controller
         ], 201);
     }
 
-    /**
-     * 3. SHOW: Ver los detalles de un solo usuario con sus paquetes
-     */
     public function show($id)
     {
-        // 🚀 También cargamos los paquetes vinculados en el detalle individual
         $user = User::with(['role', 'packages'])->find($id);
 
         if (!$user) {
@@ -72,9 +61,6 @@ class UserController extends Controller
         return response()->json($user, 200);
     }
 
-    /**
-     * 4. UPDATE: Modificar los datos de un usuario existente
-     */
     public function update(Request $request, $id)
     {
         $user = User::find($id);
@@ -119,9 +105,7 @@ class UserController extends Controller
         ], 200);
     }
 
-    /**
-     * 5. DESTROY: Borrar un usuario (Soft Delete)
-     */
+    // 🧨 ¡BORRADO FÍSICO REAL DIRECTO!
     public function destroy($id)
     {
         $user = User::find($id);
@@ -133,7 +117,7 @@ class UserController extends Controller
         $user->delete(); 
 
         return response()->json([
-            'message' => '¡Usuario eliminado correctamente de la lista activa!'
+            'message' => '¡Usuario eliminado definitivamente de la base de datos!'
         ], 200);
     }
 }
