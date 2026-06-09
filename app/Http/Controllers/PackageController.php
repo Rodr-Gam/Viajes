@@ -18,7 +18,6 @@ class PackageController extends Controller
     // 2. Crear un nuevo paquete asignando el creador automáticamente
     public function store(Request $request)
     {
-        // 🛠️ AJUSTE: Quitamos 'user_id' de la validación requerida del cliente
         $request->validate([
             'name' => 'required|string|max:255',
             'city_id' => 'required|exists:cities,id',
@@ -33,7 +32,6 @@ class PackageController extends Controller
 
         $packageData = $request->except('image');
 
-        // 👤 AUTOMATIZACIÓN: Capturamos el usuario desde el Token o usamos el ID 1 de respaldo
         if ($request->user()) {
             $packageData['user_id'] = $request->user()->id;
         } else {
@@ -69,7 +67,6 @@ class PackageController extends Controller
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
 
-        // 🛠️ AJUSTE: Quitamos la validación forzada de 'user_id' aquí también
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'city_id' => 'sometimes|exists:cities,id',
@@ -97,7 +94,7 @@ class PackageController extends Controller
         return response()->json(['message' => 'Paquete actualizado correctamente', 'package' => $package], 200);
     }
 
-    // 5. Eliminar un paquete (Soft Delete)
+    // 5. Eliminar un paquete (¡BORRADO FÍSICO REAL! 🧨)
     public function destroy($id)
     {
         $package = Package::find($id);
@@ -105,7 +102,15 @@ class PackageController extends Controller
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
 
-        $package->delete();
-        return response()->json(['message' => 'Paquete eliminado'], 200);
+        // 🖼️ Extra: Si el paquete tiene una imagen, la borramos del disco duro del servidor
+        if ($package->image_path) {
+            Storage::disk('public')->delete($package->image_path);
+        }
+
+        // 🔥 Como quitamos el trait de SoftDeletes del modelo, 
+        // este método ahora ejecutará un "DELETE FROM packages WHERE id = ..." directo en la Base de Datos.
+        $package->delete(); 
+        
+        return response()->json(['message' => 'Paquete eliminado por completo de la base de datos'], 200);
     }
 }
