@@ -74,7 +74,6 @@ class HotelController extends Controller
         $data = $request->except('image');
 
         if ($request->hasFile('image')) {
-            // Borrar imagen anterior si existe
             if ($hotel->image_path) {
                 Storage::disk('public')->delete($hotel->image_path);
             }
@@ -86,13 +85,20 @@ class HotelController extends Controller
         return response()->json(['message' => 'Hotel actualizado', 'hotel' => $hotel]);
     }
 
-    // Eliminar hotel (Soft Delete)
+    // Eliminar hotel (¡BORRADO FÍSICO REAL! 🧨)
     public function destroy($id)
     {
         $hotel = Hotel::find($id);
         if (!$hotel) return response()->json(['message' => 'No encontrado'], 404);
 
+        // 🖼️ Si el hotel tiene foto, la borramos del servidor
+        if ($hotel->image_path) {
+            Storage::disk('public')->delete($hotel->image_path);
+        }
+
+        // 🔥 Ejecuta un DELETE permanente en la base de datos
         $hotel->delete();
-        return response()->json(['message' => 'Hotel eliminado (Soft Delete)'], 200);
+        
+        return response()->json(['message' => 'Hotel eliminado por completo de la base de datos'], 200);
     }
 }
