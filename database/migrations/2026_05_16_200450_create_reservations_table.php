@@ -18,9 +18,11 @@ return new class extends Migration
             $table->date('reservation_date');
             $table->date('departure_date');
             $table->date('return_date');
+            $table->unsignedSmallInteger('reserved_seats');
             $table->enum('state', ['pending', 'confirmed', 'canceled', 'finished', 'paid'])->default('pending');
             $table->text('observations')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
