@@ -16,16 +16,14 @@ return new class extends Migration
             $table->string('phone', 20)->nullable();
             $table->enum('state', ['active', 'inactive', 'banned'])->default('active');
             
-            // 🔑 Relación con Roles (Asegúrate de que la tabla 'roles' se cree ANTES que esta)
-            $table->foreignId('role_id')
-                  ->constrained('roles')
-                  ->onDelete('cascade');
+            // 🛡️ PROTEGIDO: Cambiado a restrict (sin onDelete cascade) para evitar borrar usuarios por accidente
+            $table->foreignId('role_id')->constrained('roles');
 
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes(); 
+            
         });
     }
 

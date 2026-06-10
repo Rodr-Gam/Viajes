@@ -13,7 +13,6 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             
-            // Relación con la tabla ciudades
             $table->foreignId('city_id')
                   ->constrained('cities')
                   ->onDelete('cascade'); 
@@ -24,14 +23,14 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('image_path')->nullable(); 
             
-            // Nuevos campos agregados
+            $table->string('hgdl_key', 20)->nullable(); 
+            
             $table->string('name_supplier')->nullable();
             $table->string('booking_source')->nullable();
             $table->decimal('provider_cost', 10, 2)->nullable();
             $table->text('observations')->nullable();
             
             $table->timestamps();
-            // ❌ ELIMINADO: $table->softDeletes(); para que ya no añada 'deleted_at'
         });
     }
 
