@@ -35,9 +35,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/reservations', [ReservationController::class, 'index']);
     Route::get('/reservations/{reservation}', [ReservationController::class, 'edit']);
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
-    //Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
+    Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
     Route::post('/flights', [FlightController::class, 'store']);
+    Route::get('/flights', [FlightController::class, 'index']);
 
-    Route::get('/perfil', function (Request $request) {
-    });
+
+    Route::get('/perfil', function (Request $request) {});
 });

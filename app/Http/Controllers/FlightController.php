@@ -12,7 +12,8 @@ class FlightController extends Controller
      */
     public function index()
     {
-        //
+        $flight = Flight::all();
+        return response()->json($flight);
     }
 
     /**
