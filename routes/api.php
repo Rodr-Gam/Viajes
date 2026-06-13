@@ -10,6 +10,8 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\FlightController;
+use App\Models\Flight;
 
 // 1. Recursos y Catálogos generales
 Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
@@ -28,13 +30,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::apiResource('users', UserController::class);
 
 // 4. 🛡️ Rutas Protegidas (Solo entran los que tengan un Token válido)
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']);
-    Route::get('/reservations', [ReservationController::class, 'index']);
-    Route::get('/reservations/{reservation}', [ReservationController::class, 'edit']);
-    Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
-    Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::apiResource('reservations', ReservationController::class);
+    Route::apiResource('flights', FlightController::class);
 
-    Route::get('/perfil', function (Request $request) {
-    });
+
+    Route::get('/perfil', function (Request $request) {});
 });

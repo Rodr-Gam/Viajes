@@ -12,7 +12,7 @@ class Reservation extends Model
     protected $fillable = [
         'user_id', // 
         'package_id',
-        'reference_person', 
+        'reference_person',
         'reservation_date',
         'departure_date',
         'return_date',
@@ -29,5 +29,10 @@ class Reservation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function flight()
+    {
+        return $this->hasOne(Flight::class);
     }
 }
