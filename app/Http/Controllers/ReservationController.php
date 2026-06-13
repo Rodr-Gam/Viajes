@@ -11,11 +11,14 @@ class ReservationController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         // Traemos también la relación del usuario que reservó
         $reservations = Reservation::with(['user', 'package.user', 'package.city'])->get();
-        return response()->json($reservations);
+        if ($request->boolean('without_flight')) {
+            $reservations->whereDoesntHave('flight');
+        }
+        return response()->json($reservations->get());
     }
 
     /**
@@ -43,7 +46,7 @@ class ReservationController extends Controller
         ]);
 
         // 👤 Automatización del ID de usuario
-        $data['user_id'] = $user ? $user->id : 1; 
+        $data['user_id'] = $user->id;
 
         $package = Package::findOrFail($data['package_id']);
 
