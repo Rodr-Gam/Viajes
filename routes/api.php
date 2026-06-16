@@ -2,8 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController; // 👈 Maneja la seguridad (Login/Register)
-use App\Http\Controllers\UserController;     // 👈 NUEVO: Maneja el CRUD administrativo
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\UserController;     
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\CityController;
@@ -34,6 +34,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('reservations', ReservationController::class);
     Route::apiResource('flights', FlightController::class);
 
-
     Route::get('/perfil', function (Request $request) {});
+});
+
+Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () { 
+    Route::get('/mi-reservas', [ReservationController::class, 'index']);
 });

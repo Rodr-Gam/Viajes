@@ -14,11 +14,14 @@ class ReservationController extends Controller
     public function index(Request $request)
     {
         // Traemos también la relación del usuario que reservó
-        $reservations = Reservation::with(['user', 'package.user', 'package.city'])->get();
+        $query = Reservation::with(['user', 'package.user', 'package.city']);
         if ($request->boolean('without_flight')) {
-            $reservations->whereDoesntHave('flight');
+            $query->whereDoesntHave('flight');
         }
-        return response()->json($reservations->get());
+
+        $reservations =  $query->get();
+
+        return response()->json($reservations);
     }
 
     /**
@@ -66,9 +69,9 @@ class ReservationController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Display the specified resource.
      */
-    public function edit(Reservation $reservation)
+    public function show(Reservation $reservation)
     {
         return response()->json(
             $reservation->load(['package.user', 'user'])
