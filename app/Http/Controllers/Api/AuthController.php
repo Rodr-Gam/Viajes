@@ -30,14 +30,16 @@ class AuthController extends Controller
             'name' => $request->name,
             'last_name' => $request->last_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password), 
+            'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'state' => 'active', 
+            'state' => 'active',
             'role_id' => $request->role_id,
         ]);
 
+        $user->sendEmailVerificationNotification();
+
         return response()->json([
-            'message' => '¡Usuario registrado con éxito desde Auth!',
+            'message' => '¡Usuario registrado con éxito! Revisa tu correo para verificar tu cuenta.',
             'user' => $user
         ], 201);
     }

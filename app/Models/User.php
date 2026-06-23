@@ -16,11 +16,11 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'last_name', 
+        'last_name',
         'email',
         'password',
-        'phone',     
-        'state',     
+        'phone',
+        'state',
         'role_id',
     ];
 
@@ -50,5 +50,9 @@ class User extends Authenticatable
     public function hasRole($role)
     {
         return $this->role && $this->role->name === $role;
+    }
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
     }
 }
