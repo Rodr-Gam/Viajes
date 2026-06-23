@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\UserController;     
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\CityController;
@@ -11,6 +11,8 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
 use App\Models\Flight;
 
 // 1. Recursos y Catálogos generales
@@ -26,17 +28,36 @@ Route::post('/roles', [RoleController::class, 'store']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// 3. 🛠️ CRUD Administrativo de Usuarios (Apuntando a tu UserController completo)
-Route::apiResource('users', UserController::class);
+//reset de la contraseña
+Route::post('/forgot-password', function (Request $request) {
+    Password::sendResetLink($request->only('email'));
+    return response()->json(['message' => 'Link enviado si el correo existe.']);
+})->name('password.email');
 
-// 4. 🛡️ Rutas Protegidas (Solo entran los que tengan un Token válido)
+Route::post('/reset-password', function (Request $request) {
+    $status = Password::reset(
+        $request->only('email', 'password', 'password_confirmation', 'token'),
+        function ($user, $password) {
+            $user->password = Hash::make($password);
+            $user->save();
+        }
+    );
+
+    return $status === Password::PASSWORD_RESET
+        ? response()->json(['message' => 'Contraseña actualizada.'])
+        : response()->json(['message' => 'Token inválido o expirado.'], 400);
+})->name('password.reset');
+
+// 4. Rutas Protegidas (Solo entran los que tengan un Token válido)
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::apiResource('users', UserController::class);
     Route::apiResource('reservations', ReservationController::class);
     Route::apiResource('flights', FlightController::class);
 
     Route::get('/perfil', function (Request $request) {});
 });
 
-Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () { 
-    Route::get('/mi-reservas', [ReservationController::class, 'index']);
+Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
+    Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
+    Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);
 });

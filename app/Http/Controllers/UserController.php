@@ -6,12 +6,16 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = User::with(['role', 'packages'])->get();
+        $rolCliente = \App\Models\Role::where('name', 'cliente')->first();
+        $users = User::with(['role', 'packages'])
+            ->where('role_id', $rolCliente->id)
+            ->get();
         return response()->json($users, 200);
     }
 
@@ -40,9 +44,11 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
-            'state' => $request->state ?? 'active', 
+            'state' => $request->state ?? 'active',
             'role_id' => $request->role_id,
         ]);
+
+        Password::sendResetLink(['email' => $user->email]);
 
         return response()->json([
             'message' => '¡Usuario creado con éxito por el administrador!',
@@ -105,7 +111,7 @@ class UserController extends Controller
         ], 200);
     }
 
-    // 🧨 ¡BORRADO FÍSICO REAL DIRECTO!
+
     public function destroy($id)
     {
         $user = User::find($id);
@@ -114,7 +120,18 @@ class UserController extends Controller
             return response()->json(['message' => 'Usuario no encontrado.'], 404);
         }
 
-        $user->delete(); 
+        // Verificar reservas activas
+        $reservasActivas = $user->reservations()
+            ->whereIn('state', ['pending', 'confirmed', 'paid'])
+            ->exists();
+
+        if ($reservasActivas) {
+            return response()->json([
+                'message' => 'No se puede eliminar un usuario con reservas activas.'
+            ], 422);
+        }
+
+        $user->delete();
 
         return response()->json([
             'message' => '¡Usuario eliminado definitivamente de la base de datos!'
