@@ -8,10 +8,11 @@ use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
 {
-    // 1. Listar todos los paquetes activos con su ciudad y el usuario creador
+    // 1. Listar TODOS los paquetes (activos e inactivos) con su ciudad y el usuario creador (Admin View)
     public function index()
     {
-        $packages = Package::with(['city', 'user'])->where('status', 'active')->get();
+        // 🚀 SE QUITÓ EL FILTRO DE 'active' PARA QUE EL ADMIN PUEDA VER TODO
+        $packages = Package::with(['city', 'user'])->get();
         return response()->json($packages, 200);
     }
 
@@ -102,15 +103,23 @@ class PackageController extends Controller
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
 
-        // 🖼️ Extra: Si el paquete tiene una imagen, la borramos del disco duro del servidor
         if ($package->image_path) {
             Storage::disk('public')->delete($package->image_path);
         }
 
-        // 🔥 Como quitamos el trait de SoftDeletes del modelo, 
-        // este método ahora ejecutará un "DELETE FROM packages WHERE id = ..." directo en la Base de Datos.
         $package->delete(); 
         
         return response()->json(['message' => 'Paquete eliminado por completo de la base de datos'], 200);
+    }
+
+    // 6. 🚀 NUEVO MÉTODO: Listar sólo paquetes aptos para la vista pública del cliente
+    public function publicIndex()
+    {
+        $packages = Package::with(['city'])
+            ->where('status', 'active') // 🟢 Únicamente paquetes activos
+            ->where('stock', '>', 0)    // 🎒 Únicamente si quedan lugares disponibles
+            ->get();
+
+        return response()->json($packages, 200);
     }
 }

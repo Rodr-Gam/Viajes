@@ -17,7 +17,12 @@ use App\Models\Flight;
 
 // 1. Recursos y Catálogos generales
 Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
+
+// 🚀 NUEVA RUTA PÚBLICA: Para que los clientes vean solo paquetes activos y con stock
+Route::get('packages/public', [PackageController::class, 'publicIndex']);
+
 Route::apiResource('packages', PackageController::class);
+
 // Busca dónde tienes las ciudades y déjalas así:
 Route::get('/cities', [CityController::class, 'index']);  // 👈 NUEVA: Para listar las ciudades en React
 Route::post('/cities', [CityController::class, 'store']); // Esta es la que ya tenías para crear
@@ -28,7 +33,7 @@ Route::post('/roles', [RoleController::class, 'store']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-//reset de la contraseña
+// Reset de la contraseña
 Route::post('/forgot-password', function (Request $request) {
     Password::sendResetLink($request->only('email'));
     return response()->json(['message' => 'Link enviado si el correo existe.']);

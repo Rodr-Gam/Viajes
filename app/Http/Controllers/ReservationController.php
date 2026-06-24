@@ -124,7 +124,7 @@ class ReservationController extends Controller
             'observations' => 'nullable|string|max:500',
         ]);
 
-        return DB::transaction(function () use ($data) {¿
+        return DB::transaction(function () use ($data) {
             $package = Package::lockForUpdate()->findOrFail($data['package_id']);
             $seats = $data['reserved_seats'] ?? 0;
             $countsAgainstStock = $data['state'] !== 'canceled';
@@ -160,9 +160,9 @@ class ReservationController extends Controller
      * Update the specified resource in storage.
      *
      * Maneja tres escenarios dentro de una sola transacción con locks:
-     *  1. Cambia el paquete -> devuelve cupos al paquete viejo, resta del nuevo.
-     *  2. Mismo paquete, cambia la cantidad de asientos -> ajusta la diferencia.
-     *  3. Se cancela -> devuelve los cupos reservados.
+     * 1. Cambia el paquete -> devuelve cupos al paquete viejo, resta del nuevo.
+     * 2. Mismo paquete, cambia la cantidad de asientos -> ajusta la diferencia.
+     * 3. Se cancela -> devuelve los cupos reservados.
      */
     public function update(Request $request, Reservation $reservation)
     {
@@ -245,8 +245,8 @@ class ReservationController extends Controller
      * Remove the specified resource from storage.
      *
      * Soft delete: requiere el trait `SoftDeletes` en el modelo Reservation
-     * y una columna `deleted_at` (ver nota al final). Mantener el registro
-     * es importante para trazabilidad de reservas pagadas/finalizadas.
+     * y una columna `deleted_at`. Mantener el registro es importante para
+     * trazabilidad de reservas pagadas/finalizadas.
      */
     public function destroy(Reservation $reservation)
     {
