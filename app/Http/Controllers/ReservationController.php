@@ -45,9 +45,9 @@ class ReservationController extends Controller
 
             $query->where(function ($q) use ($search) {
                 $q->where('reference_person', 'like', "%{$search}%")
-                  ->orWhereHas('package', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('package', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -107,8 +107,7 @@ class ReservationController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
+        $rules = [
             'package_id' => 'required|exists:packages,id',
             'reference_person' => 'nullable|string|max:45',
             'reservation_date' => 'required|date',
@@ -122,7 +121,20 @@ class ReservationController extends Controller
             ],
             'state' => 'required|in:pending,confirmed,canceled,finished,paid',
             'observations' => 'nullable|string|max:500',
-        ]);
+        ];
+        $data = $request->validate($rules);
+
+        // Solo el admin debe enviar user_id
+        if ($request->user()->role === 'admin') {
+            $data['user_id'] = $request->user_id;
+        } else {
+            $data['user_id'] = $request->user()->id;
+        }
+
+        // Si es cliente, usar su propio id
+        if ($request->user()->role !== 'admin') {
+            $data['user_id'] = $request->user()->id;
+        }
 
         return DB::transaction(function () use ($data) {¿
             $package = Package::lockForUpdate()->findOrFail($data['package_id']);

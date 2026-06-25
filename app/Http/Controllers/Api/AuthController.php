@@ -36,7 +36,7 @@ class AuthController extends Controller
             'role_id' => $request->role_id,
         ]);
 
-        $user->sendEmailVerificationNotification();
+        //$user->sendEmailVerificationNotification();
 
         return response()->json([
             'message' => '¡Usuario registrado con éxito! Revisa tu correo para verificar tu cuenta.',

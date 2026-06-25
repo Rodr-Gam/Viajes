@@ -17,11 +17,13 @@ use App\Models\Flight;
 
 // 1. Recursos y Catálogos generales
 Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
-Route::apiResource('packages', PackageController::class);
+
+// 🚀 NUEVA RUTA PÚBLICA: Para que los clientes vean solo paquetes activos y con stock
+Route::get('packages/public', [PackageController::class, 'publicIndex']);
+
 // Busca dónde tienes las ciudades y déjalas así:
 Route::get('/cities', [CityController::class, 'index']);  // 👈 NUEVA: Para listar las ciudades en React
 Route::post('/cities', [CityController::class, 'store']); // Esta es la que ya tenías para crear
-Route::apiResource('hotels', HotelController::class);
 Route::post('/roles', [RoleController::class, 'store']);
 
 // 2. 🔐 Autenticación de la API (Apuntando a tu AuthController)
@@ -53,11 +55,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('reservations', ReservationController::class);
     Route::apiResource('flights', FlightController::class);
+    Route::apiResource('packages', PackageController::class);
+    Route::apiResource('hotels', HotelController::class);
+
 
     Route::get('/perfil', function (Request $request) {});
 });
 
 Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
+    Route::post('/reservations', [ReservationController::class, 'store']);
     Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
     Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);
 });
