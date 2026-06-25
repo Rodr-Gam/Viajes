@@ -10,13 +10,22 @@ use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $rolCliente = \App\Models\Role::where('name', 'cliente')->first();
-        $users = User::with(['role', 'packages'])
-            ->where('role_id', $rolCliente->id)
-            ->get();
-        return response()->json($users, 200);
+
+        $query = User::with(['role', 'packages'])
+            ->where('role_id', $rolCliente->id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->limit(10)->get(), 200);
     }
 
     public function store(Request $request)

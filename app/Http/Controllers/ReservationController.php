@@ -17,12 +17,7 @@ class ReservationController extends Controller
     private const MAX_PER_PAGE = 100;
     private const DEFAULT_PER_PAGE = 20;
 
-    /**
-     * Display a listing of the resource.
-     *
-     * Soporta filtros server-side para que el front no tenga que traer
-     * toda la tabla y filtrar en memoria: ?search=, ?state=, ?page=, ?per_page=
-     */
+    
     public function index(Request $request)
     {
         $perPage = (int) $request->input('per_page', self::DEFAULT_PER_PAGE);
@@ -98,16 +93,14 @@ class ReservationController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * El lock + chequeo de stock viven dentro de la misma transacción para
-     * que dos reservas concurrentes sobre el mismo paquete no puedan
-     * "vender" más cupos de los que existen (overselling).
-     */
     public function store(Request $request)
     {
         $rules = [
+            'user_id' => [
+                Rule::requiredIf(fn() => $request->user()->role === 'admin'),
+                'nullable',
+                'exists:users,id',
+            ],
             'package_id' => 'required|exists:packages,id',
             'reference_person' => 'nullable|string|max:45',
             'reservation_date' => 'required|date',
@@ -124,19 +117,11 @@ class ReservationController extends Controller
         ];
         $data = $request->validate($rules);
 
-        // Solo el admin debe enviar user_id
-        if ($request->user()->role === 'admin') {
-            $data['user_id'] = $request->user_id;
-        } else {
-            $data['user_id'] = $request->user()->id;
-        }
+        $data['user_id'] = $request->user()->role === 'admin'
+            ? $data['user_id']
+            : $request->user()->id;
 
-        // Si es cliente, usar su propio id
-        if ($request->user()->role !== 'admin') {
-            $data['user_id'] = $request->user()->id;
-        }
-
-        return DB::transaction(function () use ($data) {¿
+        return DB::transaction(function () use ($data) {
             $package = Package::lockForUpdate()->findOrFail($data['package_id']);
             $seats = $data['reserved_seats'] ?? 0;
             $countsAgainstStock = $data['state'] !== 'canceled';
@@ -158,9 +143,6 @@ class ReservationController extends Controller
         });
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Reservation $reservation)
     {
         return response()->json(
@@ -168,14 +150,6 @@ class ReservationController extends Controller
         );
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * Maneja tres escenarios dentro de una sola transacción con locks:
-     *  1. Cambia el paquete -> devuelve cupos al paquete viejo, resta del nuevo.
-     *  2. Mismo paquete, cambia la cantidad de asientos -> ajusta la diferencia.
-     *  3. Se cancela -> devuelve los cupos reservados.
-     */
     public function update(Request $request, Reservation $reservation)
     {
         if ($reservation->state === 'canceled') {
@@ -252,14 +226,7 @@ class ReservationController extends Controller
             ]);
         });
     }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * Soft delete: requiere el trait `SoftDeletes` en el modelo Reservation
-     * y una columna `deleted_at` (ver nota al final). Mantener el registro
-     * es importante para trazabilidad de reservas pagadas/finalizadas.
-     */
+    
     public function destroy(Reservation $reservation)
     {
         return DB::transaction(function () use ($reservation) {

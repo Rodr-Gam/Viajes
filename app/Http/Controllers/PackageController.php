@@ -11,7 +11,7 @@ class PackageController extends Controller
     // 1. Listar todos los paquetes activos con su ciudad y el usuario creador
     public function index()
     {
-        $packages = Package::with(['city', 'user'])->where('status', 'active')->get();
+        $packages = Package::with(['city', 'user'])->get();
         return response()->json($packages, 200);
     }
 
@@ -35,7 +35,7 @@ class PackageController extends Controller
         if ($request->user()) {
             $packageData['user_id'] = $request->user()->id;
         } else {
-            $packageData['user_id'] = 1; 
+            $packageData['user_id'] = 1;
         }
 
         if ($request->hasFile('image')) {
@@ -109,8 +109,8 @@ class PackageController extends Controller
 
         // 🔥 Como quitamos el trait de SoftDeletes del modelo, 
         // este método ahora ejecutará un "DELETE FROM packages WHERE id = ..." directo en la Base de Datos.
-        $package->delete(); 
-        
+        $package->delete();
+
         return response()->json(['message' => 'Paquete eliminado por completo de la base de datos'], 200);
     }
 }
