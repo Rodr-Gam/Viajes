@@ -17,7 +17,7 @@ class ReservationController extends Controller
     private const MAX_PER_PAGE = 100;
     private const DEFAULT_PER_PAGE = 20;
 
-    
+
     public function index(Request $request)
     {
         $perPage = (int) $request->input('per_page', self::DEFAULT_PER_PAGE);
@@ -34,8 +34,6 @@ class ReservationController extends Controller
         }
 
         if ($request->filled('search')) {
-            // addcslashes escapa % y _ para que el usuario no pueda inyectar
-            // comodines de LIKE y ampliar la búsqueda más allá de lo previsto.
             $search = addcslashes($request->input('search'), '%_');
 
             $query->where(function ($q) use ($search) {
@@ -95,9 +93,11 @@ class ReservationController extends Controller
 
     public function store(Request $request)
     {
+        $isAdmin = $request->user()->role->name === 'admin';
+
         $rules = [
             'user_id' => [
-                Rule::requiredIf(fn() => $request->user()->role === 'admin'),
+                Rule::requiredIf($isAdmin),
                 'nullable',
                 'exists:users,id',
             ],
@@ -117,7 +117,7 @@ class ReservationController extends Controller
         ];
         $data = $request->validate($rules);
 
-        $data['user_id'] = $request->user()->role === 'admin'
+        $data['user_id'] = $isAdmin
             ? $data['user_id']
             : $request->user()->id;
 
@@ -226,7 +226,7 @@ class ReservationController extends Controller
             ]);
         });
     }
-    
+
     public function destroy(Reservation $reservation)
     {
         return DB::transaction(function () use ($reservation) {

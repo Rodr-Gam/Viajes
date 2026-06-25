@@ -26,11 +26,11 @@ Route::get('/cities', [CityController::class, 'index']);  // 👈 NUEVA: Para li
 Route::post('/cities', [CityController::class, 'store']); // Esta es la que ya tenías para crear
 Route::post('/roles', [RoleController::class, 'store']);
 
-// 2. 🔐 Autenticación de la API (Apuntando a tu AuthController)
+// 2. 🔐 Autenticación de la API
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-//reset de la contraseña
+// Reset de la contraseña
 Route::post('/forgot-password', function (Request $request) {
     Password::sendResetLink($request->only('email'));
     return response()->json(['message' => 'Link enviado si el correo existe.']);
@@ -50,10 +50,16 @@ Route::post('/reset-password', function (Request $request) {
         : response()->json(['message' => 'Token inválido o expirado.'], 400);
 })->name('password.reset');
 
-// 4. Rutas Protegidas (Solo entran los que tengan un Token válido)
+
+// A) CUALQUIER usuario autenticado 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/reservations', [ReservationController::class, 'store']); 
+});
+
+// B) ADMINISTRADORES
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
-    Route::apiResource('reservations', ReservationController::class);
+    Route::apiResource('reservations', ReservationController::class)->except(['store']); 
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);
@@ -62,8 +68,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/perfil', function (Request $request) {});
 });
 
+// C) CLIENTES 
 Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']);
     Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
     Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);
 });
