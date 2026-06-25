@@ -11,7 +11,6 @@ class PackageController extends Controller
     // 1. Listar TODOS los paquetes (activos e inactivos) con su ciudad y el usuario creador (Admin View)
     public function index()
     {
-        // 🚀 SE QUITÓ EL FILTRO DE 'active' PARA QUE EL ADMIN PUEDA VER TODO
         $packages = Package::with(['city', 'user'])->get();
         return response()->json($packages, 200);
     }
@@ -36,7 +35,7 @@ class PackageController extends Controller
         if ($request->user()) {
             $packageData['user_id'] = $request->user()->id;
         } else {
-            $packageData['user_id'] = 1; 
+            $packageData['user_id'] = 1;
         }
 
         if ($request->hasFile('image')) {

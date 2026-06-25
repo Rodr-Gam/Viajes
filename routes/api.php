@@ -20,11 +20,10 @@ Route::apiResource('favorites', FavoriteController::class)->only(['index', 'stor
 
 // 🚀 NUEVA RUTA PÚBLICA: Para que los clientes vean solo paquetes activos y con stock
 Route::get('packages/public', [PackageController::class, 'publicIndex']);
-Route::apiResource('packages', PackageController::class);
 
-Route::get('/cities', [CityController::class, 'index']);  
-Route::post('/cities', [CityController::class, 'store']); 
-Route::apiResource('hotels', HotelController::class);
+// Busca dónde tienes las ciudades y déjalas así:
+Route::get('/cities', [CityController::class, 'index']);  // 👈 NUEVA: Para listar las ciudades en React
+Route::post('/cities', [CityController::class, 'store']); // Esta es la que ya tenías para crear
 Route::post('/roles', [RoleController::class, 'store']);
 
 // 2. 🔐 Autenticación de la API
@@ -52,27 +51,24 @@ Route::post('/reset-password', function (Request $request) {
 })->name('password.reset');
 
 
-// =========================================================================
-// 4. 🔐 RUTAS PROTEGIDAS (AQUÍ ESTÁ LA CORRECCIÓN)
-// =========================================================================
-
-// A) 🔑 Para CUALQUIER usuario autenticado (Tanto Clientes como Admins pueden CREAR reservaciones)
+// A) CUALQUIER usuario autenticado 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']); // 💡 Movida aquí para evitar el 403
+    Route::post('/reservations', [ReservationController::class, 'store']); 
 });
 
-// B) 👑 SOLO ADMINISTRADORES (Control total, menos la creación global que ya está arriba)
+// B) ADMINISTRADORES
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
-    
-    // Con ->except(['store']) evitamos que choque con la ruta de arriba
     Route::apiResource('reservations', ReservationController::class)->except(['store']); 
-    
     Route::apiResource('flights', FlightController::class);
+    Route::apiResource('packages', PackageController::class);
+    Route::apiResource('hotels', HotelController::class);
+
+
     Route::get('/perfil', function (Request $request) {});
 });
 
-// C) 👥 SOLO CLIENTES (Consultar sus propias cosas)
+// C) CLIENTES 
 Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
     Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
     Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);
