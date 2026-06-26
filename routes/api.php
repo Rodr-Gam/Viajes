@@ -11,6 +11,7 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
+use App\Http\Controllers\TransportController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Flight;
@@ -63,6 +64,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);
+    Route::apiResource('transports', TransportController::class);
 
 
     Route::get('/perfil', function (Request $request) {});

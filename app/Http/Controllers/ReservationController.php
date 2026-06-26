@@ -29,6 +29,10 @@ class ReservationController extends Controller
             $query->whereDoesntHave('flight');
         }
 
+        if ($request->boolean('without_transport')) {
+            $query->whereDoesntHave('transport');
+        }
+
         if ($request->filled('state')) {
             $query->where('state', $request->input('state'));
         }
