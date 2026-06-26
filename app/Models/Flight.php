@@ -14,7 +14,7 @@ class Flight extends Model
         'hgdl_key',
         'booking_source',
         'provider_cost',
-        'observations,'
+        'observations',
     ];
 
     public function reservation()
