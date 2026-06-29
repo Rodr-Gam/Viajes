@@ -58,7 +58,7 @@ class ReservationController extends Controller
         $user = $request->user();
 
         $reservas = Reservation::where('user_id', $user->id)
-            ->with(['package.city', 'flight'])
+            ->with(['package.city', 'flight', 'transport'])
             ->latest()
             ->get();
 
