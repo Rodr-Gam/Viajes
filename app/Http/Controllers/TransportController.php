@@ -12,7 +12,7 @@ class TransportController extends Controller
      */
     public function index()
     {
-        $transports = Transport::with(['reservation.package.user', 'reservation.package'])->get();
+        $transports = Transport::with(['reservation.user', 'reservation.package'])->get();
         return response()->json($transports);
     }
 

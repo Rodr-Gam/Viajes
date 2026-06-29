@@ -12,7 +12,7 @@ class FlightController extends Controller
      */
     public function index()
     {
-        $flight = Flight::with(['reservation.package.user', 'reservation.package'])->get();
+        $flight = Flight::with(['reservation.user', 'reservation.package'])->get();
         return response()->json($flight);
     }
 
