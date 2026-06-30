@@ -33,6 +33,10 @@ class ReservationController extends Controller
             $query->whereDoesntHave('transport');
         }
 
+        if ($request->boolean('without_hotel')) {
+            $query->whereDoesntHave('hotel');
+        }
+
         if ($request->filled('state')) {
             $query->where('state', $request->input('state'));
         }
@@ -58,7 +62,7 @@ class ReservationController extends Controller
         $user = $request->user();
 
         $reservas = Reservation::where('user_id', $user->id)
-            ->with(['package.city', 'flight'])
+            ->with(['package.city', 'flight', 'transport', 'hotel'])
             ->latest()
             ->get();
 
