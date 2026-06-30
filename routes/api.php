@@ -12,12 +12,10 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\TransportController;
+use App\Http\Controllers\RoomPriceController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Flight;
-
-// 1. Recursos y Catálogos generales
-Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
 
 // 🚀 NUEVA RUTA PÚBLICA: Para que los clientes vean solo paquetes activos y con stock
 Route::get('packages/public', [PackageController::class, 'publicIndex']);
@@ -54,16 +52,17 @@ Route::post('/reset-password', function (Request $request) {
 
 // A) CUALQUIER usuario autenticado 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']); 
+    Route::post('/reservations', [ReservationController::class, 'store']);
 });
 
 // B) ADMINISTRADORES
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
-    Route::apiResource('reservations', ReservationController::class)->except(['store']); 
+    Route::apiResource('reservations', ReservationController::class)->except(['store']);
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);
+    Route::apiResource('hotels.room-prices', RoomPriceController::class);
     Route::apiResource('transports', TransportController::class);
 
 

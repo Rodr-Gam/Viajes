@@ -40,4 +40,8 @@ class Reservation extends Model
     {
         return $this->hasOne(Transport::class);
     }
+    public function hotel()
+    {
+        return $this->hasOne(Hotel::class);
+    }
 }
