@@ -9,16 +9,16 @@ use App\Http\Controllers\HotelController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\PackageController;
+use App\Http\Controllers\PackageImageController; 
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Flight;
 
 // 1. Recursos y Catálogos generales
 Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
 
-// 🚀 NUEVA RUTA PÚBLICA: Para que los clientes vean solo paquetes activos y con stock
+// Paquetes
 Route::get('packages/public', [PackageController::class, 'publicIndex']);
 Route::apiResource('packages', PackageController::class);
 
@@ -27,7 +27,7 @@ Route::post('/cities', [CityController::class, 'store']);
 Route::apiResource('hotels', HotelController::class);
 Route::post('/roles', [RoleController::class, 'store']);
 
-// 2. 🔐 Autenticación de la API
+// 2. Autenticación de la API
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -53,26 +53,26 @@ Route::post('/reset-password', function (Request $request) {
 
 
 // =========================================================================
-// 4. 🔐 RUTAS PROTEGIDAS (AQUÍ ESTÁ LA CORRECCIÓN)
+// 4. 🔐 RUTAS PROTEGIDAS
 // =========================================================================
 
-// A) 🔑 Para CUALQUIER usuario autenticado (Tanto Clientes como Admins pueden CREAR reservaciones)
+// A) Para CUALQUIER usuario autenticado
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']); // 💡 Movida aquí para evitar el 403
+    Route::post('/reservations', [ReservationController::class, 'store']);
 });
 
-// B) 👑 SOLO ADMINISTRADORES (Control total, menos la creación global que ya está arriba)
+// B) 👑 SOLO ADMINISTRADORES
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
-    
-    // Con ->except(['store']) evitamos que choque con la ruta de arriba
     Route::apiResource('reservations', ReservationController::class)->except(['store']); 
-    
     Route::apiResource('flights', FlightController::class);
-    Route::get('/perfil', function (Request $request) {});
+    
+    // 📸 Endpoints para subir y borrar fotos del carrusel
+    Route::post('/package-images', [PackageImageController::class, 'store']);
+    Route::delete('/package-images/{id}', [PackageImageController::class, 'destroy']);
 });
 
-// C) 👥 SOLO CLIENTES (Consultar sus propias cosas)
+// C) 👥 SOLO CLIENTES
 Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
     Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
     Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);

@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-// ❌ Eliminamos: use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Package extends Model
 {
-    // ❌ Quitamos "SoftDeletes" de los traits activos
     use HasFactory;
 
     protected $fillable = [
@@ -23,7 +22,7 @@ class Package extends Model
         'price_adult',
         'price_junior',
         'price_child',
-        'image_path',
+        'image_path', // Imagen principal
         'status',
     ];
 
@@ -35,5 +34,11 @@ class Package extends Model
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    // 📸 RELACIÓN NUEVA: Un paquete puede tener muchas imágenes para el carrusel
+    public function images(): HasMany
+    {
+        return $this->hasMany(PackageImage::class, 'package_id');
     }
 }
