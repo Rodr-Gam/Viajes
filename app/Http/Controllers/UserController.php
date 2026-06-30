@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -10,13 +11,26 @@ use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $rolCliente = \App\Models\Role::where('name', 'cliente')->first();
-        $users = User::with(['role', 'packages'])
-            ->where('role_id', $rolCliente->id)
-            ->get();
-        return response()->json($users, 200);
+        $rolCliente = Role::findByKey(Role::CLIENTE);
+
+        if (!$rolCliente) {
+            return response()->json(['message' => 'Rol de cliente no configurado.'], 500);
+        }
+
+        $query = User::with(['role', 'packages'])
+            ->where('role_id', $rolCliente->id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->limit(10)->get(), 200);
     }
 
     public function store(Request $request)

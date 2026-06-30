@@ -31,7 +31,6 @@ class PackageController extends Controller
         ]);
 
         $packageData = $request->except('image');
-
         $packageData['user_id'] = $request->user() ? $request->user()->id : 1;
 
         if ($request->hasFile('image')) {
@@ -98,17 +97,12 @@ class PackageController extends Controller
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
 
-        // Borrar imagen principal
         if ($package->image_path) {
             Storage::disk('public')->delete($package->image_path);
         }
 
-        // Borrar físicamente las imágenes del carrusel del storage
         foreach ($package->images as $img) {
-            $relativePath = str_replace(asset('storage/'), '', $img->url);
-            if (Storage::disk('public')->exists($relativePath)) {
-                Storage::disk('public')->delete($relativePath);
-            }
+            $img->deleteStoredFile();
         }
 
         $package->delete(); 

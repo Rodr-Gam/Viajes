@@ -12,19 +12,17 @@ use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PackageImageController; 
 use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
+use App\Http\Controllers\TransportController;
+use App\Http\Controllers\RoomPriceController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 
-// 1. Recursos y Catálogos generales
+// 1. Recursos y Catálogos generales públicos o semi-públicos
 Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
-
-// Paquetes
 Route::get('packages/public', [PackageController::class, 'publicIndex']);
-Route::apiResource('packages', PackageController::class);
 
 Route::get('/cities', [CityController::class, 'index']);  
 Route::post('/cities', [CityController::class, 'store']); 
-Route::apiResource('hotels', HotelController::class);
 Route::post('/roles', [RoleController::class, 'store']);
 
 // 2. Autenticación de la API
@@ -56,7 +54,7 @@ Route::post('/reset-password', function (Request $request) {
 // 4. 🔐 RUTAS PROTEGIDAS
 // =========================================================================
 
-// A) Para CUALQUIER usuario autenticado
+// A) Para CUALQUIER usuario autenticado 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations', [ReservationController::class, 'store']);
 });
@@ -64,15 +62,23 @@ Route::middleware('auth:sanctum')->group(function () {
 // B) 👑 SOLO ADMINISTRADORES
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
-    Route::apiResource('reservations', ReservationController::class)->except(['store']); 
+    Route::apiResource('reservations', ReservationController::class)->except(['store']);
     Route::apiResource('flights', FlightController::class);
+    Route::apiResource('packages', PackageController::class);
+    Route::apiResource('hotels', HotelController::class);
+    Route::apiResource('hotels.room-prices', RoomPriceController::class);
+    Route::apiResource('transports', TransportController::class);
     
     // 📸 Endpoints para subir y borrar fotos del carrusel
     Route::post('/package-images', [PackageImageController::class, 'store']);
     Route::delete('/package-images/{id}', [PackageImageController::class, 'destroy']);
+
+    Route::get('/perfil', function (Request $request) {
+        return $request->user();
+    });
 });
 
-// C) 👥 SOLO CLIENTES
+// C) 👥 SOLO CLIENTES 
 Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
     Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
     Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);
