@@ -13,15 +13,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // ❌ Comentado para evitar errores con los campos obligatorios (como last_name)
-        // User::factory(10)->create();
-
-        // ❌ Comentado para que no inserte datos basura y manejes todo desde Postman
-        /*
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-        */
+        $this->call(UserSeeder::class);
     }
 }
