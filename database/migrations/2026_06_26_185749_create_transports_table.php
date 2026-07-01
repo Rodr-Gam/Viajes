@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('booking_source', 50)->nullable();
             $table->text('observations')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

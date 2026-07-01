@@ -25,6 +25,13 @@ class ReservationController extends Controller
 
         $query = Reservation::with(['user', 'package.user', 'package.city']);
 
+        //filtro de archivado 
+        if ($request->input('archived') === 'all') {
+            $query->withTrashed();
+        } elseif ($request->input('archived') === 'only') {
+            $query->onlyTrashed();
+        }
+
         if ($request->boolean('without_flight')) {
             $query->whereDoesntHave('flight');
         }
@@ -151,11 +158,22 @@ class ReservationController extends Controller
         });
     }
 
-    public function show(Reservation $reservation)
+    public function show($id)
     {
-        return response()->json(
-            $reservation->load(['package.user', 'package.city', 'user'])
-        );
+        $reservation = Reservation::withTrashed()
+            ->with([
+                'user',
+                'package.user',
+                'package.city',
+                'flightWithTrashed',
+                'hotelWithTrashed',
+                'transportWithTrashed',
+            ])
+            ->findOrFail($id);
+
+        $reservation->is_archived = $reservation->trashed();
+
+        return response()->json($reservation);
     }
 
     public function update(Request $request, Reservation $reservation)
@@ -235,6 +253,43 @@ class ReservationController extends Controller
         });
     }
 
+    public function porCliente(Request $request, $userId)
+    {
+        // Validamos que el cliente exista y no sea, por ejemplo, un admin viendo su propio expediente por error
+        $cliente = \App\Models\User::findOrFail($userId);
+
+        $reservas = Reservation::withTrashed()
+            ->where('user_id', $userId)
+            ->with([
+                'package.city',
+                'flightWithTrashed',
+                'hotelWithTrashed',
+                'transportWithTrashed',
+            ])
+            ->latest()
+            ->get()
+            ->map(function ($reserva) {
+                $reserva->is_archived = $reserva->trashed();
+                return $reserva;
+            });
+
+        return response()->json([
+            'cliente' => [
+                'id' => $cliente->id,
+                'name' => $cliente->name,
+                'last_name' => $cliente->last_name,
+                'email' => $cliente->email,
+                'phone' => $cliente->phone,
+            ],
+            'reservas' => $reservas,
+            'resumen' => [
+                'total' => $reservas->count(),
+                'activas' => $reservas->where('is_archived', false)->count(),
+                'archivadas' => $reservas->where('is_archived', true)->count(),
+            ],
+        ]);
+    }
+
     public function destroy(Reservation $reservation)
     {
         return DB::transaction(function () use ($reservation) {
@@ -249,5 +304,30 @@ class ReservationController extends Controller
 
             return response()->json(['message' => 'Reserva eliminada correctamente'], 200);
         });
+    }
+
+    //para restaurar, por si se archivo por error
+    public function restore(Request $request, $id)
+    {
+        $reservation = Reservation::onlyTrashed()->findOrFail($id);
+        $reservation->restore();
+
+        return response()->json([
+            'message' => 'Reserva restaurada correctamente',
+            'reservation' => $reservation,
+        ]);
+    }
+
+    //borrado físico permanente, solo para admin
+    public function forceDestroy(Request $request, $id)
+    {
+        if (!$request->user()->hasRole('admin')) {
+            abort(403, 'No autorizado');
+        }
+
+        $reservation = Reservation::onlyTrashed()->findOrFail($id);
+        $reservation->forceDelete();
+
+        return response()->json(['message' => 'Reserva eliminada permanentemente'], 200);
     }
 }

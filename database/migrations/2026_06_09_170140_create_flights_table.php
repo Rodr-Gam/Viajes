@@ -22,6 +22,7 @@ return new class extends Migration
             $table->decimal('provider_cost', 19,4);
             $table->text('observations')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
