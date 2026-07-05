@@ -67,6 +67,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('reservations/{id}', [ReservationController::class, 'show']);
     Route::patch('reservations/{id}/restore', [ReservationController::class, 'restore']);
     Route::delete('reservations/{id}/force', [ReservationController::class, 'forceDestroy']);
+    Route::get('clientes/archivados', [ReservationController::class, 'clientesArchivados']);
     Route::get('clientes/{userId}/expediente', [ReservationController::class, 'porCliente']);
 
     Route::apiResource('flights', FlightController::class);

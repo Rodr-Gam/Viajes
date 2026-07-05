@@ -23,7 +23,7 @@ class ReservationController extends Controller
         $perPage = (int) $request->input('per_page', self::DEFAULT_PER_PAGE);
         $perPage = max(1, min($perPage, self::MAX_PER_PAGE));
 
-        $query = Reservation::with(['user', 'package.user', 'package.city']);
+        $query = Reservation::with(['user', 'package.user', 'package.city', 'flight', 'hotel', 'transport']);
 
         //filtro de archivado 
         if ($request->input('archived') === 'all') {
@@ -165,6 +165,9 @@ class ReservationController extends Controller
                 'user',
                 'package.user',
                 'package.city',
+                'flight',
+                'hotel',
+                'transport',
                 'flightWithTrashed',
                 'hotelWithTrashed',
                 'transportWithTrashed',
@@ -288,6 +291,69 @@ class ReservationController extends Controller
                 'archivadas' => $reservas->where('is_archived', true)->count(),
             ],
         ]);
+    }
+
+    public function clientesArchivados(Request $request)
+    {
+        $perPage = (int) $request->input('per_page', self::DEFAULT_PER_PAGE);
+        $perPage = max(1, min($perPage, self::MAX_PER_PAGE));
+
+        $query = \App\Models\User::query()
+            ->whereHas('reservations', function ($q) {
+                $q->onlyTrashed();
+            })
+            ->withCount([
+                'reservations as archived_count' => function ($q) {
+                    $q->onlyTrashed();
+                },
+                'reservations as total_count' => function ($q) {
+                    $q->withTrashed();
+                },
+            ])
+            ->with([
+                'reservations' => function ($q) {
+                    $q->onlyTrashed()->latest()->limit(1); // última reserva archivada, para mostrar fecha
+                },
+            ]);
+
+        // Buscador por nombre/apellido/email
+        if ($request->filled('search')) {
+            $search = addcslashes($request->input('search'), '%_');
+
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro: rango de fecha en que se archivó
+        if ($request->filled('archived_from')) {
+            $query->whereHas('reservations', function ($q) use ($request) {
+                $q->onlyTrashed()->where('deleted_at', '>=', $request->input('archived_from'));
+            });
+        }
+
+        if ($request->filled('archived_to')) {
+            $query->whereHas('reservations', function ($q) use ($request) {
+                $q->onlyTrashed()->where('deleted_at', '<=', $request->input('archived_to'));
+            });
+        }
+
+        // Filtro: destino (ciudad del paquete)
+        if ($request->filled('city_id')) {
+            $query->whereHas('reservations', function ($q) use ($request) {
+                $q->onlyTrashed()->whereHas('package', function ($q2) use ($request) {
+                    $q2->where('city_id', $request->input('city_id'));
+                });
+            });
+        }
+
+        $clientes = $query->orderByDesc('archived_count')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json($clientes);
     }
 
     public function destroy(Reservation $reservation)
