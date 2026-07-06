@@ -23,7 +23,7 @@ class ReservationController extends Controller
         $perPage = (int) $request->input('per_page', self::DEFAULT_PER_PAGE);
         $perPage = max(1, min($perPage, self::MAX_PER_PAGE));
 
-        $query = Reservation::with(['user', 'package.user', 'package.city', 'flight', 'hotel', 'transport']);
+        $query = Reservation::with(['user', 'package.user', 'package.city', 'flight', 'hotel', 'transport', 'documents']);
 
         //filtro de archivado 
         if ($request->input('archived') === 'all') {
@@ -358,18 +358,9 @@ class ReservationController extends Controller
 
     public function destroy(Reservation $reservation)
     {
-        return DB::transaction(function () use ($reservation) {
-            if (in_array($reservation->state, ['pending', 'confirmed'])) {
-                $package = Package::lockForUpdate()->find($reservation->package_id);
-                if ($package && $reservation->reserved_seats) {
-                    $package->increment('stock', $reservation->reserved_seats);
-                }
-            }
+        $reservation->delete();
 
-            $reservation->delete();
-
-            return response()->json(['message' => 'Reserva eliminada correctamente'], 200);
-        });
+        return response()->json(['message' => 'Reserva archivada correctamente'], 200);
     }
 
     //para restaurar, por si se archivo por error

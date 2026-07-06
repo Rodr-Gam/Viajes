@@ -8,9 +8,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\ReservationDocumentController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PackageImageController;
-use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\RoomPriceController;
@@ -75,6 +75,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('hotels', HotelController::class);
     Route::apiResource('hotels.room-prices', RoomPriceController::class);
     Route::apiResource('transports', TransportController::class);
+
+    //documentos de reserva
+    Route::get('reservations/{reservation}/documents', [ReservationDocumentController::class, 'index']);
+    Route::post('reservations/{reservation}/documents', [ReservationDocumentController::class, 'store']);
+    Route::delete('reservation-documents/{document}', [ReservationDocumentController::class, 'destroy']);
 
     // 📸 Endpoints para subir y borrar fotos del carrusel
     Route::post('/package-images', [PackageImageController::class, 'store']);

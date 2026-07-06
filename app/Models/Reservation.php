@@ -76,4 +76,9 @@ class Reservation extends Model
             $reservation->transport()->withTrashed()->first()?->restore();
         });
     }
+
+    public function documents()
+    {
+        return $this->hasMany(ReservationDocument::class);
+    }
 }
