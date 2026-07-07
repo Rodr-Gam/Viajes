@@ -54,20 +54,19 @@ Route::post('/reset-password', function (Request $request) {
 
 // A) CUALQUIER usuario autenticado 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/reservations', [ReservationController::class, 'store']); 
+    Route::post('/reservations', [ReservationController::class, 'store']);
+    Route::get('/perfil', [UserController::class, 'perfil']);
+    Route::put('/perfil', [UserController::class, 'actualizarPerfil']);
 });
 
 // B) ADMINISTRADORES
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
-    Route::apiResource('reservations', ReservationController::class)->except(['store']); 
+    Route::apiResource('reservations', ReservationController::class)->except(['store']);
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);
     Route::apiResource('transports', TransportController::class);
-
-
-    Route::get('/perfil', function (Request $request) {});
 });
 
 // C) CLIENTES 

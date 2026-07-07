@@ -146,4 +146,47 @@ class UserController extends Controller
             'message' => '¡Usuario eliminado definitivamente de la base de datos!'
         ], 200);
     }
+
+    public function perfil(Request $request)
+    {
+        $user = $request->user()->load(['role', 'packages']);
+
+        return response()->json($user, 200);
+    }
+
+    public function actualizarPerfil(Request $request)
+    {
+        $user = $request->user();
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|string|max:45',
+            'last_name' => 'sometimes|string|max:45',
+            'email' => 'sometimes|string|email|max:100|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Errores de validación',
+                'errors' => $validator->errors()
+            ], 400);
+        }
+
+        $user->name = $request->name ?? $user->name;
+        $user->last_name = $request->last_name ?? $user->last_name;
+        $user->email = $request->email ?? $user->email;
+        $user->phone = $request->phone ?? $user->phone;
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => '¡Perfil actualizado con éxito!',
+            'user' => $user
+        ], 200);
+    }
 }
