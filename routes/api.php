@@ -57,6 +57,8 @@ Route::post('/reset-password', function (Request $request) {
 // A) Para CUALQUIER usuario autenticado 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reservations', [ReservationController::class, 'store']);
+    Route::get('/perfil', [UserController::class, 'perfil']);
+    Route::put('/perfil', [UserController::class, 'actualizarPerfil']);
 });
 
 // B) 👑 SOLO ADMINISTRADORES
