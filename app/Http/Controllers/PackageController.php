@@ -8,14 +8,14 @@ use Illuminate\Support\Facades\Storage;
 
 class PackageController extends Controller
 {
-    // 1. Listar TODOS los paquetes (activos e inactivos) con su ciudad y el usuario creador (Admin View)
+    // 1. Listar TODOS los paquetes con su carrusel de imágenes (Admin View)
     public function index()
     {
-        $packages = Package::with(['city', 'user'])->get();
+        $packages = Package::with(['city', 'user', 'images'])->get();
         return response()->json($packages, 200);
     }
 
-    // 2. Crear un nuevo paquete asignando el creador automáticamente
+    // 2. Crear un nuevo paquete
     public function store(Request $request)
     {
         $request->validate([
@@ -23,6 +23,7 @@ class PackageController extends Controller
             'city_id' => 'required|exists:cities,id',
             'duration' => 'required|string|max:255',
             'departure_date' => 'required|date|after_or_equal:today',
+            'return_date' => 'required|date|after_or_equal:departure_date',
             'stock' => 'required|integer|min:0',
             'price_adult' => 'required|numeric|min:0',
             'price_junior' => 'required|numeric|min:0',
@@ -31,12 +32,7 @@ class PackageController extends Controller
         ]);
 
         $packageData = $request->except('image');
-
-        if ($request->user()) {
-            $packageData['user_id'] = $request->user()->id;
-        } else {
-            $packageData['user_id'] = 1;
-        }
+        $packageData['user_id'] = $request->user() ? $request->user()->id : 1;
 
         if ($request->hasFile('image')) {
             $packageData['image_path'] = $request->file('image')->store('packages', 'public');
@@ -47,10 +43,10 @@ class PackageController extends Controller
         return response()->json(['message' => '¡Paquete registrado con éxito!', 'package' => $package], 201);
     }
 
-    // 3. Ver detalle de un paquete específico
+    // 3. Ver detalle de un paquete específico (Con sus imágenes de carrusel)
     public function show($id)
     {
-        $package = Package::with(['city', 'user'])->find($id);
+        $package = Package::with(['city', 'user', 'images'])->find($id);
 
         if (!$package) {
             return response()->json(['message' => 'Paquete no encontrado'], 404);
@@ -72,6 +68,7 @@ class PackageController extends Controller
             'city_id' => 'sometimes|exists:cities,id',
             'duration' => 'sometimes|string|max:255',
             'departure_date' => 'sometimes|date',
+            'return_date' => 'sometimes|date|after_or_equal:' . $request->input('departure_date', $package->departure_date->format('Y-m-d')),
             'stock' => 'sometimes|integer|min:0',
             'price_adult' => 'sometimes|numeric|min:0',
             'price_junior' => 'sometimes|numeric|min:0',
@@ -94,10 +91,10 @@ class PackageController extends Controller
         return response()->json(['message' => 'Paquete actualizado correctamente', 'package' => $package], 200);
     }
 
-    // 5. Eliminar un paquete (¡BORRADO FÍSICO REAL! 🧨)
+    // 5. Eliminar un paquete por completo
     public function destroy($id)
     {
-        $package = Package::find($id);
+        $package = Package::with('images')->find($id);
         if (!$package) {
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
@@ -106,17 +103,21 @@ class PackageController extends Controller
             Storage::disk('public')->delete($package->image_path);
         }
 
+        foreach ($package->images as $img) {
+            $img->deleteStoredFile();
+        }
+
         $package->delete(); 
         
-        return response()->json(['message' => 'Paquete eliminado por completo de la base de datos'], 200);
+        return response()->json(['message' => 'Paquete y sus imágenes eliminados por completo'], 200);
     }
 
-    // 6. 🚀 NUEVO MÉTODO: Listar sólo paquetes aptos para la vista pública del cliente
+    // 6. Vista pública (Aptos con stock e imágenes cargadas de golpe)
     public function publicIndex()
     {
-        $packages = Package::with(['city'])
-            ->where('status', 'active') // 🟢 Únicamente paquetes activos
-            ->where('stock', '>', 0)    // 🎒 Únicamente si quedan lugares disponibles
+        $packages = Package::with(['city', 'images'])
+            ->where('status', 'active')
+            ->where('stock', '>', 0)    
             ->get();
 
         return response()->json($packages, 200);

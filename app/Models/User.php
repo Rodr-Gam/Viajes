@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-// ❌ ELIMINADO: use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Role;
 use App\Models\Package;
 
@@ -47,9 +46,13 @@ class User extends Authenticatable
         return $this->hasMany(Package::class);
     }
 
-    public function hasRole($role)
+    public function hasRole(string $role): bool
     {
-        return $this->role && $this->role->name === $role;
+        if (!$this->role) {
+            return false;
+        }
+
+        return Role::normalize($this->role->name) === Role::normalize($role);
     }
     public function reservations()
     {
