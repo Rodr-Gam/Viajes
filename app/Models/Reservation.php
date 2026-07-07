@@ -18,9 +18,34 @@ class Reservation extends Model
         'departure_date',
         'return_date',
         'reserved_seats',
+        'adults',
+        'juniors',
+        'children',
+        'unit_price_adult',
+        'unit_price_junior',
+        'unit_price_child',
+        'total_amount',
         'state',
         'observations',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'reservation_date' => 'date',
+            'departure_date' => 'date',
+            'return_date' => 'date',
+            'unit_price_adult' => 'decimal:2',
+            'unit_price_junior' => 'decimal:2',
+            'unit_price_child' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+        ];
+    }
+
+    public function totalPassengers(): int
+    {
+        return ($this->adults ?? 0) + ($this->juniors ?? 0) + ($this->children ?? 0);
+    }
 
     public function package(): BelongsTo
     {

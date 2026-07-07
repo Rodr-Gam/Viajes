@@ -96,6 +96,13 @@ class ReservationController extends Controller
             'departure_date' => $reserva->departure_date,
             'return_date' => $reserva->return_date,
             'reserved_seats' => $reserva->reserved_seats,
+            'adults' => $reserva->adults,
+            'juniors' => $reserva->juniors,
+            'children' => $reserva->children,
+            'unit_price_adult' => $reserva->unit_price_adult,
+            'unit_price_junior' => $reserva->unit_price_junior,
+            'unit_price_child' => $reserva->unit_price_child,
+            'total_amount' => $reserva->total_amount,
             'state' => $reserva->state,
             'package' => $reserva->package,
             'flight' => $reserva->flight ? [
@@ -121,12 +128,10 @@ class ReservationController extends Controller
             'reservation_date' => 'required|date',
             'departure_date' => 'required|date|after_or_equal:reservation_date',
             'return_date' => 'required|date|after_or_equal:departure_date',
-            'reserved_seats' => [
-                'nullable',
-                'integer',
-                'min:1',
-                Rule::requiredIf($request->state === 'confirmed'),
-            ],
+            'adults' => 'nullable|integer|min:0',
+            'juniors' => 'nullable|integer|min:0',
+            'children' => 'nullable|integer|min:0',
+            'reserved_seats' => 'nullable|integer|min:1',
             'state' => 'required|in:pending,confirmed,canceled,finished,paid',
             'observations' => 'nullable|string|max:500',
         ];
@@ -138,7 +143,9 @@ class ReservationController extends Controller
 
         return DB::transaction(function () use ($data) {
             $package = Package::lockForUpdate()->findOrFail($data['package_id']);
-            $seats = $data['reserved_seats'] ?? 0;
+            $data = $this->normalizePassengers($data);
+            $this->applyPricing($package, $data);
+            $seats = $data['reserved_seats'];
             $countsAgainstStock = $data['state'] !== 'canceled';
 
             if ($countsAgainstStock && $package->stock < $seats) {
@@ -153,7 +160,7 @@ class ReservationController extends Controller
 
             return response()->json([
                 'message' => '¡Reserva creada con éxito!',
-                'reservation' => $reservation,
+                'reservation' => $reservation->load(['package.city', 'user']),
             ], 201);
         });
     }
@@ -191,12 +198,10 @@ class ReservationController extends Controller
             'reservation_date' => 'required|date',
             'departure_date' => 'required|date|after_or_equal:reservation_date',
             'return_date' => 'required|date|after_or_equal:departure_date',
-            'reserved_seats' => [
-                'nullable',
-                'integer',
-                'min:1',
-                Rule::requiredIf($request->state === 'confirmed'),
-            ],
+            'adults' => 'nullable|integer|min:0',
+            'juniors' => 'nullable|integer|min:0',
+            'children' => 'nullable|integer|min:0',
+            'reserved_seats' => 'nullable|integer|min:1',
             'state' => 'required|in:pending,confirmed,canceled,finished,paid',
             'observations' => 'nullable|string|max:500',
         ]);
@@ -205,12 +210,11 @@ class ReservationController extends Controller
             $isCanceling = $data['state'] === 'canceled';
             $isChangingPackage = (int) $data['package_id'] !== (int) $reservation->package_id;
 
+            $data = $this->normalizePassengers($data, $reservation);
             $oldSeats = $reservation->reserved_seats ?? 0;
-            $newSeats = $data['reserved_seats'] ?? 0;
+            $newSeats = $data['reserved_seats'];
 
             if ($isChangingPackage) {
-                // Bloqueamos ambos paquetes (orden por id evita deadlocks
-                // si dos requests cruzan los mismos dos paquetes al revés).
                 $packageIds = [$reservation->package_id, $data['package_id']];
                 sort($packageIds);
                 $locked = Package::whereIn('id', $packageIds)
@@ -220,12 +224,12 @@ class ReservationController extends Controller
 
                 $oldPackage = $locked[$reservation->package_id];
                 $newPackage = $locked[$data['package_id']];
+                $this->applyPricing($newPackage, $data);
 
                 if (!$isCanceling && $newPackage->stock < $newSeats) {
                     abort(422, 'No hay suficientes lugares disponibles en el paquete seleccionado.');
                 }
 
-                // Devuelve los cupos que tenía reservados en el paquete viejo.
                 $oldPackage->increment('stock', $oldSeats);
 
                 if (!$isCanceling) {
@@ -233,6 +237,7 @@ class ReservationController extends Controller
                 }
             } else {
                 $package = Package::lockForUpdate()->findOrFail($data['package_id']);
+                $this->applyPricing($package, $data);
 
                 if ($isCanceling) {
                     $package->increment('stock', $oldSeats);
@@ -386,5 +391,60 @@ class ReservationController extends Controller
         $reservation->forceDelete();
 
         return response()->json(['message' => 'Reserva eliminada permanentemente'], 200);
+    }
+
+    /**
+     * Normaliza cantidades por tipo de pasajero y calcula reserved_seats total.
+     */
+    private function normalizePassengers(array $data, ?Reservation $existing = null): array
+    {
+        $hasBreakdown = array_key_exists('adults', $data)
+            || array_key_exists('juniors', $data)
+            || array_key_exists('children', $data);
+
+        if ($hasBreakdown) {
+            $adults = (int) ($data['adults'] ?? 0);
+            $juniors = (int) ($data['juniors'] ?? 0);
+            $children = (int) ($data['children'] ?? 0);
+        } elseif (array_key_exists('reserved_seats', $data) && $data['reserved_seats'] !== null) {
+            $adults = (int) $data['reserved_seats'];
+            $juniors = 0;
+            $children = 0;
+        } elseif ($existing) {
+            $adults = (int) ($existing->adults ?? 0);
+            $juniors = (int) ($existing->juniors ?? 0);
+            $children = (int) ($existing->children ?? 0);
+        } else {
+            $adults = 0;
+            $juniors = 0;
+            $children = 0;
+        }
+
+        $total = $adults + $juniors + $children;
+
+        if ($total < 1) {
+            abort(422, 'Debes reservar al menos un lugar.');
+        }
+
+        $data['adults'] = $adults;
+        $data['juniors'] = $juniors;
+        $data['children'] = $children;
+        $data['reserved_seats'] = $total;
+
+        return $data;
+    }
+
+    /**
+     * Guarda snapshot de precios del paquete y calcula el total de la reserva.
+     */
+    private function applyPricing(Package $package, array &$data): void
+    {
+        $data['unit_price_adult'] = $package->price_adult;
+        $data['unit_price_junior'] = $package->price_junior;
+        $data['unit_price_child'] = $package->price_child;
+        $data['total_amount'] =
+            ($data['adults'] * $package->price_adult) +
+            ($data['juniors'] * $package->price_junior) +
+            ($data['children'] * $package->price_child);
     }
 }

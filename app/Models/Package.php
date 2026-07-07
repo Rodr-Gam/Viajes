@@ -18,6 +18,7 @@ class Package extends Model
         'city_id',
         'duration',
         'departure_date',
+        'return_date',
         'stock',
         'price_adult',
         'price_junior',
@@ -25,6 +26,14 @@ class Package extends Model
         'image_path', // Imagen principal
         'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'departure_date' => 'date',
+            'return_date' => 'date',
+        ];
+    }
 
     public function user(): BelongsTo
     {
