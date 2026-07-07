@@ -23,6 +23,11 @@ return new class extends Migration
             $table->enum('state', ['pending', 'confirmed', 'canceled', 'finished', 'paid'])->default('pending');
             $table->text('observations')->nullable();
             $table->timestamps();
+            $table->softDeletes();
+
+            //indices
+            $table->index('user_id');
+            $table->index('state');
         });
     }
 
