@@ -69,4 +69,9 @@ class Reservation extends Model
     {
         return $this->hasOne(Hotel::class);
     }
+
+    public function passengers()
+    {
+        return $this->hasMany(Passenger::class);
+    }
 }

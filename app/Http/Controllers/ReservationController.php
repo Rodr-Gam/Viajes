@@ -62,7 +62,7 @@ class ReservationController extends Controller
         $user = $request->user();
 
         $reservas = Reservation::where('user_id', $user->id)
-            ->with(['package.city', 'flight', 'transport', 'hotel'])
+            ->with(['package.city', 'flight', 'transport', 'hotel', 'passengers'])
             ->latest()
             ->get();
 
@@ -75,7 +75,7 @@ class ReservationController extends Controller
 
         $reserva = Reservation::where('user_id', $user->id)
             ->where('id', $id)
-            ->with(['package.city', 'flight'])
+            ->with(['package.city', 'flight', 'passengers'])
             ->first();
 
         if (!$reserva) {
@@ -97,6 +97,7 @@ class ReservationController extends Controller
             'unit_price_child' => $reserva->unit_price_child,
             'total_amount' => $reserva->total_amount,
             'state' => $reserva->state,
+            'passengers' => $reserva->passengers,
             'package' => $reserva->package,
             'flight' => $reserva->flight ? [
                 'airline_name' => $reserva->flight->airline_name,
@@ -161,7 +162,7 @@ class ReservationController extends Controller
     public function show(Reservation $reservation)
     {
         return response()->json(
-            $reservation->load(['package.user', 'package.city', 'user'])
+            $reservation->load(['package.user', 'package.city', 'user', 'passengers'])
         );
     }
 

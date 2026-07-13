@@ -17,12 +17,32 @@ class CityController extends Controller
     // Tu función de guardar que ya tenías perfecta
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:100',
             'country' => 'nullable|string|max:100',
         ]);
 
-        $city = City::create($request->all());
+        $name = trim($validated['name']);
+        $country = trim($validated['country'] ?? 'México') ?: 'México';
+
+        $alreadyExists = City::query()
+            ->whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower($name)])
+            ->whereRaw('LOWER(TRIM(country)) = ?', [mb_strtolower($country)])
+            ->exists();
+
+        if ($alreadyExists) {
+            return response()->json([
+                'message' => 'Ya existe un destino con ese nombre y país.',
+                'errors' => [
+                    'name' => ['Ya existe un destino registrado como "' . $name . '" en ' . $country . '.'],
+                ],
+            ], 422);
+        }
+
+        $city = City::create([
+            'name' => $name,
+            'country' => $country,
+        ]);
 
         return response()->json([
             'message' => '¡Ciudad agregada con éxito!',

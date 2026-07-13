@@ -14,6 +14,7 @@ use App\Http\Controllers\FavoriteController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\RoomPriceController;
+use App\Http\Controllers\PassengerController;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 
@@ -65,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('reservations', ReservationController::class)->except(['store']);
+    Route::apiResource('reservations.passengers', PassengerController::class);
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);
@@ -74,14 +76,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // 📸 Endpoints para subir y borrar fotos del carrusel
     Route::post('/package-images', [PackageImageController::class, 'store']);
     Route::delete('/package-images/{id}', [PackageImageController::class, 'destroy']);
-
-    Route::get('/perfil', function (Request $request) {
-        return $request->user();
-    });
 });
 
 // C) 👥 SOLO CLIENTES 
 Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
     Route::get('/mis-reservas', [ReservationController::class, 'misReservas']);
     Route::get('/mis-reservas/{id}', [ReservationController::class, 'misReservaDetalle']);
+    Route::get('/mis-reservas/{reservation}/passengers', [PassengerController::class, 'index']);
+    Route::post('/mis-reservas/{reservation}/passengers', [PassengerController::class, 'store']);
+    Route::get('/mis-reservas/{reservation}/passengers/{passenger}', [PassengerController::class, 'show']);
+    Route::put('/mis-reservas/{reservation}/passengers/{passenger}', [PassengerController::class, 'update']);
+    Route::delete('/mis-reservas/{reservation}/passengers/{passenger}', [PassengerController::class, 'destroy']);
 });
