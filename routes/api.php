@@ -8,9 +8,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\HotelController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\ReservationDocumentController;
 use App\Http\Controllers\PackageController;
-use App\Http\Controllers\PackageImageController; 
-use App\Http\Controllers\FavoriteController;
+use App\Http\Controllers\PackageImageController;
 use App\Http\Controllers\FlightController;
 use App\Http\Controllers\TransportController;
 use App\Http\Controllers\RoomPriceController;
@@ -19,11 +19,10 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 
 // 1. Recursos y Catálogos generales públicos o semi-públicos
-Route::apiResource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy']);
 Route::get('packages/public', [PackageController::class, 'publicIndex']);
 
-Route::get('/cities', [CityController::class, 'index']);  
-Route::post('/cities', [CityController::class, 'store']); 
+Route::get('/cities', [CityController::class, 'index']);
+Route::post('/cities', [CityController::class, 'store']);
 Route::post('/roles', [RoleController::class, 'store']);
 
 // 2. Autenticación de la API
@@ -66,13 +65,29 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('reservations', ReservationController::class)->except(['store']);
+<<<<<<< HEAD
     Route::apiResource('reservations.passengers', PassengerController::class);
+=======
+
+    //reservaciones
+    Route::get('reservations/{id}', [ReservationController::class, 'show']);
+    Route::patch('reservations/{id}/restore', [ReservationController::class, 'restore']);
+    Route::delete('reservations/{id}/force', [ReservationController::class, 'forceDestroy']);
+    Route::get('clientes/archivados', [ReservationController::class, 'clientesArchivados']);
+    Route::get('clientes/{userId}/expediente', [ReservationController::class, 'porCliente']);
+
+>>>>>>> 93da9d2177dfc35e92c76b8614ad8a8d85ec8513
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);
     Route::apiResource('hotels.room-prices', RoomPriceController::class);
     Route::apiResource('transports', TransportController::class);
-    
+
+    //documentos de reserva
+    Route::get('reservations/{reservation}/documents', [ReservationDocumentController::class, 'index']);
+    Route::post('reservations/{reservation}/documents', [ReservationDocumentController::class, 'store']);
+    Route::delete('reservation-documents/{document}', [ReservationDocumentController::class, 'destroy']);
+
     // 📸 Endpoints para subir y borrar fotos del carrusel
     Route::post('/package-images', [PackageImageController::class, 'store']);
     Route::delete('/package-images/{id}', [PackageImageController::class, 'destroy']);

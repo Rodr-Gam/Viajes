@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('flights', function (Blueprint $table) {
+        Schema::create('reservation_documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reservation_id')->constrained('reservations')->onDelete('cascade');
-            $table->string('airline_name', 50);
-            $table->string('destination', 50);
-            $table->string('flight_schedule', 255);
-            $table->string('hgdl_key', 20);
-            $table->string('booking_source', 50)->nullable();
-            $table->decimal('provider_cost', 19,4);
-            $table->text('observations')->nullable();
+            $table->enum('type', ['hotel_voucher', 'payment', 'transfer', 'other']);
+            $table->string('original_name');
+            $table->string('file_path');
             $table->timestamps();
-            $table->softDeletes();
+
+            $table->unique(['reservation_id', 'type']);
         });
     }
 
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('flights');
+        Schema::dropIfExists('reservation_documents');
     }
 };

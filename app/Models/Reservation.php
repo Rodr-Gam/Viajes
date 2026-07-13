@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reservation extends Model
 {
-   // use SoftDeletes;
+    use SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -70,8 +70,46 @@ class Reservation extends Model
         return $this->hasOne(Hotel::class);
     }
 
+<<<<<<< HEAD
     public function passengers()
     {
         return $this->hasMany(Passenger::class);
+=======
+    //Para ver el detalle completo, archivado o no
+    public function flightWithTrashed()
+    {
+        return $this->hasOne(Flight::class)->withTrashed();
+    }
+
+    public function hotelWithTrashed()
+    {
+        return $this->hasOne(Hotel::class)->withTrashed();
+    }
+
+    public function transportWithTrashed()
+    {
+        return $this->hasOne(Transport::class)->withTrashed();
+    }
+
+    //Hooks para propagar el archivado y restauración a vuelos, transporte y hotel
+    protected static function booted(): void
+    {
+        static::deleting(function (Reservation $reservation) {
+            $reservation->flight?->delete();
+            $reservation->hotel?->delete();
+            $reservation->transport?->delete();
+        });
+
+        static::restoring(function (Reservation $reservation) {
+            $reservation->flight()->withTrashed()->first()?->restore();
+            $reservation->hotel()->withTrashed()->first()?->restore();
+            $reservation->transport()->withTrashed()->first()?->restore();
+        });
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(ReservationDocument::class);
+>>>>>>> 93da9d2177dfc35e92c76b8614ad8a8d85ec8513
     }
 }
