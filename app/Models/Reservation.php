@@ -70,11 +70,11 @@ class Reservation extends Model
         return $this->hasOne(Hotel::class);
     }
 
-<<<<<<< HEAD
     public function passengers()
     {
         return $this->hasMany(Passenger::class);
-=======
+    }
+
     //Para ver el detalle completo, archivado o no
     public function flightWithTrashed()
     {
@@ -110,6 +110,5 @@ class Reservation extends Model
     public function documents()
     {
         return $this->hasMany(ReservationDocument::class);
->>>>>>> 93da9d2177dfc35e92c76b8614ad8a8d85ec8513
     }
 }

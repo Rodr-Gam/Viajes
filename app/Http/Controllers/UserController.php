@@ -20,7 +20,8 @@ class UserController extends Controller
         }
 
         $query = User::with(['role', 'packages'])
-            ->where('role_id', $rolCliente->id);
+            ->where('role_id', $rolCliente->id)
+            ->where('state', 'active'); 
 
         if ($request->filled('search')) {
             $search = $request->search;

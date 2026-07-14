@@ -14,7 +14,7 @@ class Package extends Model
     protected $fillable = [
         'name',
         'description',
-        'user_id', 
+        'user_id',
         'city_id',
         'duration',
         'departure_date',
@@ -49,5 +49,10 @@ class Package extends Model
     public function images(): HasMany
     {
         return $this->hasMany(PackageImage::class, 'package_id');
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
     }
 }
