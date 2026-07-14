@@ -65,18 +65,14 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('users', UserController::class);
     Route::apiResource('reservations', ReservationController::class)->except(['store']);
-<<<<<<< HEAD
     Route::apiResource('reservations.passengers', PassengerController::class);
-=======
 
     //reservaciones
-    Route::get('reservations/{id}', [ReservationController::class, 'show']);
     Route::patch('reservations/{id}/restore', [ReservationController::class, 'restore']);
     Route::delete('reservations/{id}/force', [ReservationController::class, 'forceDestroy']);
     Route::get('clientes/archivados', [ReservationController::class, 'clientesArchivados']);
     Route::get('clientes/{userId}/expediente', [ReservationController::class, 'porCliente']);
 
->>>>>>> 93da9d2177dfc35e92c76b8614ad8a8d85ec8513
     Route::apiResource('flights', FlightController::class);
     Route::apiResource('packages', PackageController::class);
     Route::apiResource('hotels', HotelController::class);

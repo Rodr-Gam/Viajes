@@ -9,9 +9,16 @@ use Illuminate\Support\Facades\Storage;
 class PackageController extends Controller
 {
     // 1. Listar TODOS los paquetes con su carrusel de imágenes (Admin View)
-    public function index()
+    public function index(Request $request)
     {
-        $packages = Package::with(['city', 'user', 'images'])->get();
+        $query = Package::with(['city', 'user', 'images']);
+
+        if ($request->boolean('bookable_only')) {
+            $query->where('stock', '>', 0);
+        }
+
+        $packages = $query->get();
+
         return response()->json($packages, 200);
     }
 
@@ -51,6 +58,10 @@ class PackageController extends Controller
         if (!$package) {
             return response()->json(['message' => 'Paquete no encontrado'], 404);
         }
+
+        $package->reserved_seats_total = $package->reservations()
+            ->where('state', '!=', 'canceled')
+            ->sum('reserved_seats');
 
         return response()->json($package, 200);
     }
@@ -107,8 +118,8 @@ class PackageController extends Controller
             $img->deleteStoredFile();
         }
 
-        $package->delete(); 
-        
+        $package->delete();
+
         return response()->json(['message' => 'Paquete y sus imágenes eliminados por completo'], 200);
     }
 
@@ -117,7 +128,7 @@ class PackageController extends Controller
     {
         $packages = Package::with(['city', 'images'])
             ->where('status', 'active')
-            ->where('stock', '>', 0)    
+            ->where('stock', '>', 0)
             ->get();
 
         return response()->json($packages, 200);
