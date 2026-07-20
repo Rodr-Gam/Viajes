@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Package;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -46,6 +47,13 @@ class ReservationController extends Controller
 
         if ($request->filled('state')) {
             $query->where('state', $request->input('state'));
+        }
+
+        // Filtro por tipo de paquete (público/privado)
+        if ($request->filled('package_status')) {
+            $query->whereHas('package', function ($q) use ($request) {
+                $q->where('status', $request->input('package_status'));
+            });
         }
 
         if ($request->filled('search')) {
@@ -138,6 +146,13 @@ class ReservationController extends Controller
         ];
         $data = $request->validate($rules);
 
+        if (!empty($data['user_id'])) {
+            $cliente = User::find($data['user_id']);
+            if (!$cliente || $cliente->state !== 'active') {
+                abort(422, 'No se puede crear una reserva para un cliente inactivo o baneado.');
+            }
+        }
+
         $data['user_id'] = $isAdmin
             ? $data['user_id']
             : $request->user()->id;
@@ -173,6 +188,7 @@ class ReservationController extends Controller
                 'user',
                 'package.user',
                 'package.city',
+                'passengers',
                 'flight',
                 'hotel',
                 'transport',

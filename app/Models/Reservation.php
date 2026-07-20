@@ -75,6 +75,7 @@ class Reservation extends Model
         return $this->hasMany(Passenger::class);
     }
 
+    // Para ver el detalle completo, archivado o no
     public function flightWithTrashed()
     {
         return $this->hasOne(Flight::class)->withTrashed();
