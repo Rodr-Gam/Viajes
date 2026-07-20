@@ -166,13 +166,8 @@ class ReservationController extends Controller
         });
     }
 
-    public function show($id)
+    public function show($reservation)
     {
-<<<<<<< HEAD
-        return response()->json(
-            $reservation->load(['package.user', 'package.city', 'user', 'passengers'])
-        );
-=======
         $reservation = Reservation::withTrashed()
             ->with([
                 'user',
@@ -181,16 +176,17 @@ class ReservationController extends Controller
                 'flight',
                 'hotel',
                 'transport',
+                'passengers',
+                'documents',
                 'flightWithTrashed',
                 'hotelWithTrashed',
                 'transportWithTrashed',
             ])
-            ->findOrFail($id);
+            ->findOrFail($reservation);
 
         $reservation->is_archived = $reservation->trashed();
 
         return response()->json($reservation);
->>>>>>> 93da9d2177dfc35e92c76b8614ad8a8d85ec8513
     }
 
     public function update(Request $request, Reservation $reservation)

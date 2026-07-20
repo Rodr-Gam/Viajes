@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request; // 👈 1. IMPORTANTE: Agregamos esta importación
+use Illuminate\Http\Request;
 use App\Http\Middleware\RoleMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -19,9 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-
-        // 🚀 3. EL TRUCO SENIOR: Esto le dice a Laravel: 
-        // "Si la petición va para la API (api/*), NO REDIRECCIONES JAMÁS, responde JSON limpio"
         $exceptions->shouldRenderJsonWhen(function (Request $request, Throwable $e) {
             if ($request->is('api/*')) {
                 return true;
